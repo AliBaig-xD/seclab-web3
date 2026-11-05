@@ -32,10 +32,23 @@ def tokenize(ex, tok, seq_len):
         prompt = user + "\n"
         full = user + "\n" + ex["output"]
     p_ids = tok(prompt, add_special_tokens=False)["input_ids"]
-    f_ids = tok(full, add_special_tokens=False)["input_ids"][:seq_len]
-    labels = list(f_ids)
-    for i in range(min(len(p_ids), len(f_ids))):
-        labels[i] = -100
+    full_ids = tok(full, add_special_tokens=False)["input_ids"]
+    comp = full_ids[len(p_ids):]                      # completion (assistant) tokens
+    if not comp:                                      # no supervised target -> keep last token
+        comp = full_ids[-1:]
+    if len(comp) >= seq_len - 16:                     # completion alone (near-)fills the window
+        comp = comp[:seq_len - 16]
+        p_keep = p_ids[:16]
+    else:
+        budget = seq_len - len(comp)
+        if len(p_ids) <= budget:
+            p_keep = list(p_ids)
+        else:                                         # keep instruction head + source tail, drop middle
+            head = (budget * 2) // 3
+            tail = budget - head
+            p_keep = list(p_ids[:head]) + list(p_ids[len(p_ids) - tail:])
+    f_ids = list(p_keep) + list(comp)
+    labels = [-100] * len(p_keep) + list(comp)        # loss only on the completion; never all-masked
     return {"input_ids": f_ids, "attention_mask": [1] * len(f_ids), "labels": labels,
             "length": len(f_ids)}
 

@@ -24,8 +24,9 @@ def parse_verdict(text: str) -> str:
 
 
 class LLMReviewer:
-    def __init__(self, client):
+    def __init__(self, client, votes: int = 1):
         self.client = client
+        self.votes = max(1, votes)
 
     def falsify(self, finding, target_dir: str) -> bool:
         if any(e.kind in DYNAMIC_PROOF for e in finding.evidence):
@@ -36,7 +37,14 @@ class LLMReviewer:
         prompt = (f"Candidate finding:\n- type: {h.vuln_type}\n- location: {h.location}\n"
                   f"- precondition: {h.precondition}\n- claimed impact: {h.claimed_impact}\n"
                   f"- evidence: {ev}\n\n<UNTRUSTED_CODE>\n{code[:6000]}\n</UNTRUSTED_CODE>\n\nVerdict?")
-        if parse_verdict(self.client.generate(prompt, system=SYSTEM_REVIEW)) == "false_positive":
-            finding.notes += "[reviewer: flagged false positive] "
+        fp = 0
+        for i in range(self.votes):
+            temp = 0.4 if self.votes > 1 else None
+            seed = i if self.votes > 1 else None
+            if parse_verdict(self.client.generate(prompt, system=SYSTEM_REVIEW,
+                                                  temperature=temp, seed=seed)) == "false_positive":
+                fp += 1
+        if fp * 2 > self.votes:   # majority
+            finding.notes += f"[reviewer majority false-positive {fp}/{self.votes}] "
             return True
         return False

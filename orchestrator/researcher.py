@@ -66,9 +66,11 @@ def parse_hypotheses(text: str, cap: int = 50) -> list[Hypothesis]:
 
 
 class Researcher:
-    def __init__(self, client, kb=None):
+    def __init__(self, client, kb=None, samples: int = 1, explore_temp: float = 0.6):
         self.client = client
         self.kb = kb
+        self.samples = max(1, samples)
+        self.explore_temp = explore_temp
 
     def hypothesize(self, code: str, static_hints: str = "") -> list[Hypothesis]:
         if self.kb is not None:
@@ -77,5 +79,13 @@ class Researcher:
                 static_hints = ("Relevant vulnerability knowledge:\n" +
                                 "\n".join(f"- {c['title']}: {c['text'][:200]}" for c in cards) +
                                 ("\n" + static_hints if static_hints else ""))
-        resp = self.client.generate(build_prompt(code, static_hints), system=SYSTEM)
-        return parse_hypotheses(resp)
+        prompt = build_prompt(code, static_hints)
+        seen = {}
+        reps = self.samples
+        for i in range(reps):
+            temp = self.explore_temp if reps > 1 else None
+            seed = i if reps > 1 else None
+            for h in parse_hypotheses(self.client.generate(prompt, system=SYSTEM,
+                                                           temperature=temp, seed=seed)):
+                seen.setdefault(h.id, h)
+        return list(seen.values())

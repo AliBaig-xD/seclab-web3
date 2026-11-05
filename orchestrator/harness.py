@@ -30,6 +30,8 @@ class ScanOptions:
     poc_test: str = None
     poc_family: str = "reentrancy"
     swarm_concurrency: int = 1
+    samples: int = 1
+    votes: int = 1
     verbose: bool = False
 
 
@@ -85,8 +87,8 @@ class ResearchHarness:
             if kb.count() == 0:
                 kb.seed_from_cards(os.path.join(ROOT, "knowledge", "cards.json"))
             log.info(f"RAG knowledge base: {kb.count()} cards")
-        researcher = Researcher(client, kb=kb)
-        reviewer = LLMReviewer(client)
+        researcher = Researcher(client, kb=kb, samples=opt.samples)
+        reviewer = LLMReviewer(client, votes=opt.votes)
         protocol = ProtocolIntelligence(client)
         exploiter = None
         if opt.exploit:

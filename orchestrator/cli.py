@@ -29,6 +29,7 @@ def _add_engine_flags(p):
     p.add_argument("--poc-test", help="confirm a known exploit test as PROVEN")
     p.add_argument("--poc-family", default="reentrancy")
     p.add_argument("--swarm-concurrency", type=int, default=1)
+    p.add_argument("--thorough", action="store_true", help="multi-sample hypotheses + reviewer voting (more test-time compute)")
     p.add_argument("--verbose", action="store_true")
     p.add_argument("--run-id")
     p.add_argument("--target-id")

@@ -29,3 +29,16 @@ Edit `config/train.yaml`: `base_model`, `method` (qlora|lora|full), `lora.r/alph
 HF_TOKEN=hf_xxx scripts/hf_push.sh <user>/seclab-web3-adapter model/adapters
 ```
 Creates a PRIVATE repo and uploads. Weights never leave your control.
+
+## Serve the trained model (use it in the lab)
+```
+bash scripts/serve_trained.sh          # vLLM serves base + adapter on :8001 (frees GPU from ollama)
+```
+Then point the lab at it by editing `config/model.yaml`:
+```
+server: vllm
+endpoint: "http://127.0.0.1:8001"
+model_ref: "seclab"
+```
+The orchestrator's model-client factory (`make_client`) routes to the vLLM OpenAI API
+automatically. Switch back to Ollama/14B by reverting those three lines.

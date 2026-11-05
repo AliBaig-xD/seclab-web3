@@ -82,3 +82,30 @@ def test_pipeline_merges_file_and_symbol_locations(tmp_path):
     s = EvidenceStore(str(tmp_path / "e.db"))
     fs = Pipeline(s, [SymbolScanner()], []).run("r1", str(tmp_path), "tgt")
     assert len(fs) == 1
+
+
+class StaticOnly:
+    kind = "slither"
+    def scan(self, target):
+        from orchestrator.schema import Hypothesis, Evidence
+        h = Hypothesis("reentrancy", "src/Vault.sol:8", "p", "drain", source="static")
+        return [(h, Evidence(kind="slither", tool="slither", summary="s", severity_hint="HIGH"))]
+
+
+class WinningExploiter:
+    def attempt(self, hyp, target_dir, imp, src):
+        from orchestrator.schema import Evidence
+        return Evidence(kind="foundry_poc", tool="forge", summary="generated PoC passed",
+                        repro="forge test --match-contract PoC"), 1
+
+
+def test_exploiter_upgrades_candidate_to_proven(tmp_path):
+    from orchestrator.evidence import EvidenceStore
+    from orchestrator.pipeline import Pipeline
+    from orchestrator.schema import Tier
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "Vault.sol").write_text("contract Vault {}")
+    s = EvidenceStore(str(tmp_path / "e.db"))
+    fs = Pipeline(s, [StaticOnly()], [], exploiter=WinningExploiter(),
+                  source_files={"src/Vault.sol": "contract Vault {}"}).run("r1", str(tmp_path), "t")
+    assert fs[0].tier == Tier.PROVEN and fs[0].repro_cmd

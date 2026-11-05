@@ -73,3 +73,13 @@ Format: `date · phase · action · command/evidence · result · gate`
   + independent adversarial reviewer (kills FPs, never overrides a dynamic proof).
 - NEW first-class plan item: Phase 9 swarm hypothesis engine (protocol map-reduce) to
   scale the local model past its context window; consolidation finds A-then-B interaction bugs.
+
+## 2026-11-05 · Phase 4b · exploitation agent (honest ceiling noted)
+- Built exploitation agent: LLM writes Foundry PoC -> compile+run in sandbox -> error-feedback
+  iteration (deterministic first, stochastic repair after) + one-shot structural example.
+- Mechanism verified correct (hand-written fixture PoC passes identical runner -> PROVEN).
+- 14B@Q4 CEILING: it writes correct attack mechanics but cannot reliably finish a compilable PoC
+  (fails on trivial slips like getter `()`). Tried seeding guidance, stochastic repair, sharper
+  feedback, one-shot example. This is the known local-model limit stated at project start.
+- Wired as OPT-IN (--exploit). Real fix path: training capability-C (PoC generation) + model is
+  config-swappable to a stronger local model; optional frontier-escalation hook stays off by default.

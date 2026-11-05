@@ -21,6 +21,14 @@ def family(vt: str) -> str:
     return "reentrancy" if "reentran" in v else v
 
 
+def _resolve_source(location: str, source_files: dict):
+    stem = loc_key(location)
+    for path, content in source_files.items():
+        if os.path.basename(path).split(".")[0].lower() == stem:
+            return "../" + path, content
+    return None, None
+
+
 def _severity(f: Finding) -> Severity:
     best = Severity.UNKNOWN
     for e in f.evidence:
@@ -37,7 +45,7 @@ def _severity(f: Finding) -> Severity:
 class Pipeline:
     def __init__(self, store: EvidenceStore, scanners, verifiers,
                  reviewer=None, researcher=None, llm_code=None, protocol=None,
-                 seed_hypotheses=None):
+                 seed_hypotheses=None, exploiter=None, source_files=None, max_exploits=5):
         self.store = store
         self.scanners = scanners
         self.verifiers = verifiers
@@ -47,9 +55,13 @@ class Pipeline:
         self.protocol = protocol
         self.protocol_model = None
         self.seed_hypotheses = seed_hypotheses or []
+        self.exploiter = exploiter
+        self.source_files = source_files or {}
+        self.max_exploits = max_exploits
 
     def run(self, run_id: str, target_dir: str, target_id: str):
         self.store.start_run(run_id, target_id)
+        self._exploits_left = self.max_exploits
         hints = ""
         if self.protocol is not None and self.llm_code:
             self.protocol_model = self.protocol.analyze(self.llm_code)
@@ -101,6 +113,18 @@ class Pipeline:
                     f.repro_cmd = e.repro
             f.severity = _severity(f)
             f.recompute_tier()
+            if (self.exploiter is not None and not f.falsified
+                    and f.tier != __import__("orchestrator.schema", fromlist=["Tier"]).Tier.PROVEN
+                    and self._exploits_left > 0 and (f.evidence)):
+                imp, src = _resolve_source(f.hypothesis.location, self.source_files)
+                if imp and src:
+                    self._exploits_left -= 1
+                    ev, _it = self.exploiter.attempt(f.hypothesis, target_dir, imp, src)
+                    if ev:
+                        f.evidence.append(ev)
+                        if ev.repro and not f.repro_cmd:
+                            f.repro_cmd = ev.repro
+                        f.recompute_tier()
             if self.reviewer is not None and f.reportable and self.reviewer.falsify(f, target_dir):
                 f.falsified = True
                 f.recompute_tier()

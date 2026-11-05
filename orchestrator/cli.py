@@ -33,6 +33,7 @@ def main(argv=None):
     ap.add_argument("--fast", action="store_true", help="skip slow symbolic/fuzz engines")
     ap.add_argument("--swarm", action="store_true", help="graph-sliced map-reduce hypothesis engine")
     ap.add_argument("--swarm-concurrency", type=int, default=1)
+    ap.add_argument("--exploit", action="store_true", help="LLM-generate+run Foundry PoCs to prove candidates")
     a = ap.parse_args(argv)
 
     os.chdir(ROOT)
@@ -91,6 +92,9 @@ def main(argv=None):
             researcher = Researcher(client)
             reviewer = LLMReviewer(client)
             protocol = ProtocolIntelligence(client)
+            if a.exploit:
+                from .exploit import ExploitationAgent
+                globals()["_EXPLOITER"] = ExploitationAgent(client)
             llm_code = read_sources(target)
             print(f"[llm] researcher+reviewer+protocol enabled ({mc['model_ref']}), {len(llm_code)} chars")
             if a.swarm:
@@ -117,9 +121,11 @@ def main(argv=None):
 
     run_id = a.run_id or f"run-{int(time.time())}"
     print(f"[run] {run_id} scanning {target}")
+    from .ingest import read_source_files as _rsf
     pipe = Pipeline(store, scanners, verifiers, reviewer=reviewer,
                     researcher=researcher, llm_code=llm_code, protocol=protocol,
-                    seed_hypotheses=seed)
+                    seed_hypotheses=seed, exploiter=globals().get("_EXPLOITER"),
+                    source_files=_rsf(target))
     findings = pipe.run(run_id, target, tid)
     if pipe.protocol_model is None:
         pipe.protocol_model = globals().get("_PRECOMPUTED_PROTOCOL")

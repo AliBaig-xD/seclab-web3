@@ -46,3 +46,9 @@ self-contained "local lab on my EC2". Authored and run over SSH; Mac is only a t
 User provided a dedicated passwordless deploy key at ~/.ssh/id_ed25519 and a git
 remote, and asked the assistant to push after each commit. Repo core.sshCommand set
 to that key. Commits remain clean (no AI attribution).
+
+## D12 — Trainable model on T4 = 7B (14B OOMs; bigger HW swaps the config)
+A 14B QLoRA needs ~15GB (weights+activations) and the T4 has 16GB total -> OOM. On this
+hardware we train Qwen2.5-Coder-7B-Instruct, which fits training AND inference, giving a
+genuinely specialized model (the "well-trained small model" thesis). config/train.yaml
+base_model is one line; on A100/bigger the 14B (or larger) trains unchanged.

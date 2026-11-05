@@ -1,6 +1,6 @@
 # Switch the base model to train by editing base_model (or --base). Everything below
 # is model- and hardware-agnostic: the same config scales to A100/multi-GPU unchanged.
-base_model: "Qwen/Qwen2.5-Coder-14B-Instruct"
+base_model: "Qwen/Qwen2.5-Coder-7B-Instruct"
 base_revision: "main"
 method: "qlora"            # qlora | lora | full
 quantization: "nf4"
@@ -12,7 +12,7 @@ lora:
 train:
   seq_len: 1024
   lr: 2.0e-4
-  epochs: 1
+  epochs: 2
   batch_size: 1
   grad_accum: 16
   warmup_ratio: 0.03

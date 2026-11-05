@@ -21,7 +21,7 @@ stage_model(){
   docker exec seclab-ollama ollama pull "$MODEL_REF"
   docker exec seclab-ollama ollama list
 }
-stage_analysis(){ log "building analysis image..."; docker compose -f "$CF" build analysis; }
+stage_analysis(){ log "building analysis image..."; docker build -f docker/analysis.Dockerfile -t seclab-web3/analysis:latest .; }
 
 case "${1:-all}" in
   check) stage_check;;

@@ -16,12 +16,3 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-  analysis:
-    build:
-      context: .
-      dockerfile: docker/analysis.Dockerfile
-    image: seclab-web3/analysis:latest
-    profiles: ["tools"]
-    volumes:
-      - /opt/dlami/nvme/seclab/work:/work
-    working_dir: /work

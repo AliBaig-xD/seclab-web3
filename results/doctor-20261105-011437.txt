@@ -1,0 +1,9 @@
+seclab-web3 doctor 20261105-011437
+OK   docker 29.9.2
+OK   gpu Tesla T4, 15360 MiB
+OK   ollama up
+OK   model qwen2.5-coder:14b present
+model-probe: REENTRANCY
+MISS analysis image
+---
+DOCTOR: MISSING ITEMS

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seclab-web3"
+version = "0.1.0"
+description = "Local EVM security research harness"
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6"]
+
+[project.scripts]
+seclab = "orchestrator.cli:main"
+
+[tool.setuptools]
+packages = ["orchestrator", "orchestrator.tools"]

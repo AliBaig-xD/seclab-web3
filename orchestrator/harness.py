@@ -70,11 +70,11 @@ class ResearchHarness:
     def _llm_stack(self, target, opt, log):
         """Returns (researcher, reviewer, protocol, seed_hypotheses, exploiter, protocol_model_holder)."""
         if not (opt.llm or opt.swarm):
-            return None, None, None, [], None
+            return None, None, None, [], None, None
         client = make_client(self.mc)
         if not client.available():
             log.warning("model endpoint unavailable; proceeding with tools only")
-            return None, None, None, [], None
+            return None, None, None, [], None, None
         from .researcher import Researcher
         from .reviewer import LLMReviewer
         from .protocol import ProtocolIntelligence
@@ -92,6 +92,7 @@ class ResearchHarness:
         if opt.exploit:
             from .exploit import ExploitationAgent
             exploiter = ExploitationAgent(client)
+        pm = None
         seed = []
         if opt.swarm:
             from .codeintel import extract as ci_extract, build_slices, interaction_pairs
@@ -102,12 +103,14 @@ class ResearchHarness:
             files = read_source_files(target)
             srcs = {c["contract"]: source_for_contract(files, c["contract"]) for c in ci.get("contracts", [])}
             pm = protocol.analyze(read_sources(target))
+            _pm_local = pm
             eng = SwarmEngine(client, concurrency=opt.swarm_concurrency, kb=kb)
             seed = eng.run(slices, pairs, srcs, pm)
             log.info(f"swarm: slices={eng.stats['slices']} deep={eng.stats['deep']} "
                      f"pairs={eng.stats['pairs']} hypotheses={len(seed)}")
             researcher = None  # swarm supersedes single-shot
-        return researcher, reviewer, protocol, seed, exploiter
+        return researcher, reviewer, protocol, seed, exploiter, pm
+        
 
     def run(self, *, local=None, onchain=None, chain=1, basis=None, target_id=None,
             opt: ScanOptions = None, run_id=None) -> dict:
@@ -158,8 +161,25 @@ class ResearchHarness:
 
         # --- hypothesis + verification ---
         phase("hypothesis+verification")
-        researcher, reviewer, protocol, seed, exploiter = self._llm_stack(target, opt, log)
+        researcher, reviewer, protocol, seed, exploiter, protocol_model = self._llm_stack(target, opt, log)
+        if protocol is not None and protocol_model is None:
+            try:
+                protocol_model = protocol.analyze(read_sources(target))
+            except Exception:
+                protocol_model = None
         scanners = self._scanners(opt)
+        if (not opt.fast) and protocol_model and protocol_model.get("invariants") and ci.get("contracts"):
+            import re as _re
+            main = ci["contracts"][0]["contract"]
+            files = read_source_files(target)
+            imp = next(("../" + path for path, c in files.items()
+                        if _re.search(rf"\bcontract\s+{main}\b", c)), None)
+            if imp:
+                from .tools.autoinvariant import AutoInvariantScanner, build_harness_contract
+                src, props = build_harness_contract(ci, main, protocol_model["invariants"], imp)
+                if src:
+                    scanners.append(AutoInvariantScanner(ci, main, protocol_model["invariants"], imp))
+                    log.info(f"auto-invariant fuzzing: synthesized {len(props)} propert(y/ies) for {main}")
         verifiers = []
         if opt.poc_test:
             from .tools.foundry import FoundryPoCVerifier

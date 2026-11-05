@@ -606,6 +606,30 @@ def load_learn_evm_attacks(base: str) -> list[Example]:
     return out
 
 
+
+# ---------------- DIVE (tool-consensus labels, source fetched; CC-BY-4.0) ----------------
+def load_dive(path: str) -> list[Example]:
+    out: list[Example] = []
+    if not os.path.exists(path):
+        return out
+    for ln in open(path):
+        try:
+            r = json.loads(ln)
+        except Exception:
+            continue
+        src = _norm(r.get("source", "")); classes = r.get("classes", [])
+        if not src or not classes or len(src) < 200:
+            continue
+        out.append(Example("A", classes[0],
+                           "Analyze this Solidity contract and list the vulnerability classes it likely "
+                           "contains.",
+                           src[:9000],
+                           "Likely vulnerability classes (static/symbolic tool consensus): "
+                           + ", ".join(classes) + ".",
+                           "DIVE (tool-labeled)", "CC-BY-4.0", _sha(src)))
+    return out
+
+
 LOADERS = {
     "corpus": lambda: load_corpus(),
     "smartbugs": lambda: load_smartbugs(os.path.join(SCRATCH, "datasets", "smartbugs-curated")),
@@ -617,6 +641,7 @@ LOADERS = {
     "swc": lambda: load_swc(os.path.join(SCRATCH, "datasets", "swc-registry")),
     "dvd": lambda: load_dvd(os.path.join(SCRATCH, "datasets", "damn-vulnerable-defi")),
     "learn_evm_attacks": lambda: load_learn_evm_attacks(os.path.join(SCRATCH, "datasets", "learn-evm-attacks")),
+    "dive": lambda: load_dive(os.path.join(ROOT, "training", "data_sources", "dive.jsonl")),
 }
 
 
@@ -706,7 +731,7 @@ def write(examples: list[Example], out_dir: str, per_source: dict):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild","verified","forge","cve","swc","dvd","learn_evm_attacks"])
+    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild","verified","forge","cve","swc","dvd","learn_evm_attacks","dive"])
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "training", "data"))
     a = ap.parse_args()
     examples, per_source = curate(a.sources)

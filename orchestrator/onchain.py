@@ -47,9 +47,19 @@ def materialize(d: dict, dest: str) -> dict:
             fh.write(content)
         nfiles += 1
     solc = solc_version(d)
-    remaps = ((d.get("metadata") or {}).get("settings") or {}).get("remappings") or []
+    settings = ((d.get("metadata") or {}).get("settings") or {})
+    remaps = settings.get("remappings") or []
+    opt = settings.get("optimizer") or {}
+    optimizer = bool(opt.get("enabled", True))
+    runs = int(opt.get("runs", 200))
+    via_ir = bool(settings.get("viaIR", False))
+    evm = settings.get("evmVersion")
     toml = ('[profile.default]\nsrc = "."\ntest = "__none__"\nout = "out"\n'
-            f'solc = "{solc}"\nauto_detect_remappings = true\n')
+            f'solc = "{solc}"\nauto_detect_remappings = true\n'
+            f'optimizer = {str(optimizer).lower()}\noptimizer_runs = {runs}\n'
+            f'via_ir = {str(via_ir).lower()}\n')
+    if evm:
+        toml += f'evm_version = "{evm}"\n'
     if remaps:
         toml += "remappings = [" + ", ".join(f'"{r}"' for r in remaps) + "]\n"
     with open(os.path.join(dest, "foundry.toml"), "w") as fh:

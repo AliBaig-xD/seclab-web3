@@ -7,7 +7,7 @@ log(){ echo "[watchdog] $(date -u +%H:%M:%SZ) $*" >> results/watchdog.log; }
 log "started"
 sleep 60   # let the current run settle before first check
 while true; do
-  if grep -q 'TRAIN_EXIT=' results/train_prod.log 2>/dev/null; then
+  if grep -q 'TRAIN_EXIT=0' results/train_prod.log 2>/dev/null; then
     log "training pipeline exited (marker present); done watching"; break
   fi
   if pgrep -f 'training/finetune.py' >/dev/null 2>&1 || pgrep -f 'training/evaluate.py' >/dev/null 2>&1; then

@@ -1,0 +1,27 @@
+name: seclab-web3
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: seclab-ollama
+    restart: unless-stopped
+    ports: ["127.0.0.1:11434:11434"]
+    volumes:
+      - /opt/dlami/nvme/seclab/ollama:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=30m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+  analysis:
+    build:
+      context: .
+      dockerfile: docker/analysis.Dockerfile
+    image: seclab-web3/analysis:latest
+    profiles: ["tools"]
+    volumes:
+      - /opt/dlami/nvme/seclab/work:/work
+    working_dir: /work

@@ -257,6 +257,24 @@ def load_defivulnlabs(base: str) -> list[Example]:
     return out
 
 
+def load_verified(path: str) -> list[Example]:
+    out = []
+    if not os.path.exists(path):
+        return out
+    for line in open(path):
+        try:
+            r = json.loads(line)
+        except Exception:
+            continue
+        if not (r.get("input") and r.get("output")):
+            continue
+        out.append(Example(r.get("capability", "A"), r.get("vuln_class", "unknown"),
+                           r["instruction"], _norm(r["input"]), r["output"],
+                           r.get("source", "verified-flywheel"),
+                           r.get("license", "proprietary-internal"), _sha(_norm(r["input"]))))
+    return out
+
+
 LOADERS = {
     "corpus": lambda: load_corpus(),
     "smartbugs": lambda: load_smartbugs(os.path.join(SCRATCH, "datasets", "smartbugs-curated")),
@@ -291,6 +309,7 @@ def load_slither_wild(path: str) -> list[Example]:
 LOADERS["web3bugs"] = lambda: load_web3bugs(os.path.join(SCRATCH, "datasets", "web3bugs"))
 LOADERS["slither_wild"] = lambda: load_slither_wild(os.path.join(ROOT, "training", "data", "slither_wild.jsonl"))
 LOADERS["defivulnlabs"] = lambda: load_defivulnlabs(os.path.join(SCRATCH, "datasets", "defivulnlabs"))
+LOADERS["verified"] = lambda: load_verified(os.path.join(ROOT, "training", "data", "verified.jsonl"))
 
 
 # ---------------- curation ----------------
@@ -351,7 +370,7 @@ def write(examples: list[Example], out_dir: str, per_source: dict):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild"])
+    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild","verified"])
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "training", "data"))
     a = ap.parse_args()
     examples, per_source = curate(a.sources)

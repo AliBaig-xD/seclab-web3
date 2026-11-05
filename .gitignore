@@ -19,3 +19,4 @@ eval/corpus/**/cache/
 eval/corpus/**/broadcast/
 eval/corpus/**/lib/
 knowledge/kb.db
+training/data/verified.jsonl

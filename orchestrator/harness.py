@@ -201,6 +201,18 @@ class ResearchHarness:
             render_disclosure(build_disclosure(findings, tid)))
         with open(os.path.join(run_dir, "findings.json"), "w") as f:
             json.dump([finding_json(x) for x in findings], f, indent=2)
+        # self-improvement flywheel: verified findings -> training data
+        try:
+            from .flywheel import emit_training_examples
+            from .ingest import source_for_contract
+            _files = read_source_files(target)
+            _sbc = {c["contract"].lower(): source_for_contract(_files, c["contract"])
+                    for c in ci.get("contracts", [])}
+            _n = emit_training_examples(findings, _sbc)
+            if _n:
+                log.info(f"flywheel: +{_n} training examples from verified findings")
+        except Exception as _e:
+            log.warning(f"flywheel emit skipped: {_e}")
 
         reportable = [f for f in findings if f.reportable]
         proven = [f for f in findings if f.tier.value == "PROVEN"]

@@ -8,6 +8,7 @@
 from __future__ import annotations
 import argparse, json, os, sys
 from .harness import ResearchHarness, ScanOptions
+from .targets import resolve_target
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -42,8 +43,30 @@ def cmd_scan(a):
 
 
 def cmd_onchain(a):
-    r = ResearchHarness().run(onchain=a.address, chain=a.chain, basis=a.basis,
+    t = resolve_target(a.address)
+    address = t.get("address", a.address)
+    chain = a.chain if a.chain else (t.get("chain") or 1)
+    r = ResearchHarness().run(onchain=address, chain=chain, basis=a.basis,
                               opt=_opts(a), target_id=a.target_id, run_id=a.run_id)
+    return 2 if "error" in r else 0
+
+
+def cmd_go(a):
+    """Paste anything: address | explorer URL | repo URL | local path."""
+    t = resolve_target(a.target)
+    k = t["kind"]
+    h = ResearchHarness()
+    if k in ("address", "explorer"):
+        r = h.run(onchain=t["address"], chain=(a.chain or t.get("chain") or 1),
+                  basis=a.basis, opt=_opts(a), target_id=a.target_id, run_id=a.run_id)
+    elif k == "repo":
+        r = h.run(repo=t["url"], basis=a.basis, opt=_opts(a), target_id=a.target_id, run_id=a.run_id)
+    elif k == "local":
+        r = h.run(local=t["path"], opt=_opts(a), target_id=a.target_id, run_id=a.run_id)
+    else:  # dapp
+        print(f"[dapp] {t['url']} is a dApp frontend; frontends do not map 1:1 to contracts.")
+        print("       Use its GitHub repo (seclab repo <url>) or a deployed address / explorer URL.")
+        return 2
     return 2 if "error" in r else 0
 
 
@@ -103,9 +126,15 @@ def main(argv=None):
     rp.add_argument("--basis", required=True)
     _add_engine_flags(rp)
     rp.set_defaults(fn=cmd_repo)
+    g = sub.add_parser("go", help="paste anything: address | explorer URL | repo URL | local path")
+    g.add_argument("target")
+    g.add_argument("--chain", type=int, default=0)
+    g.add_argument("--basis", default="own")
+    _add_engine_flags(g)
+    g.set_defaults(fn=cmd_go)
     o = sub.add_parser("onchain", help="scan a deployed verified contract")
     o.add_argument("address")
-    o.add_argument("--chain", type=int, default=1)
+    o.add_argument("--chain", type=int, default=0)
     o.add_argument("--basis", required=True)
     _add_engine_flags(o)
     o.set_defaults(fn=cmd_onchain)

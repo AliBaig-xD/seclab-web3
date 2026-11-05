@@ -12,3 +12,4 @@
 {"step": 50, "eval_loss": NaN, "eval_runtime": 239.3279, "eval_samples_per_second": 1.007, "eval_steps_per_second": 1.007, "epoch": 0.6993006993006993}
 {"step": 55, "loss": 1.191, "grad_norm": 0.28885018825531006, "learning_rate": 0.00014469280750858854, "epoch": 0.7692307692307693}
 {"step": 60, "loss": 1.4672, "grad_norm": 0.2544838488101959, "learning_rate": 0.00013431997820456592, "epoch": 0.8391608391608392}
+{"step": 65, "loss": 0.743, "grad_norm": 0.9950185418128967, "learning_rate": 0.0001235093295771032, "epoch": 0.9090909090909091}

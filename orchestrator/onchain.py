@@ -67,8 +67,62 @@ def materialize(d: dict, dest: str) -> dict:
     return {"solc": solc, "nfiles": nfiles, "main": main_contract(d), "remappings": remaps}
 
 
+
+
+def parse_etherscan_source(result0: dict) -> dict | None:
+    """Convert an Etherscan getsourcecode result into the Sourcify-shaped dict that
+    materialize() consumes. Handles single-file, multi-file standard-json, and the
+    double-brace-wrapped variant."""
+    raw = (result0.get("SourceCode") or "").strip()
+    if not raw:
+        return None
+    name = result0.get("ContractName") or ""
+    sources = {}
+    settings = {}
+    if raw.startswith("{"):
+        body = raw[1:-1] if raw.startswith("{{") and raw.endswith("}}") else raw
+        try:
+            doc = json.loads(body)
+        except Exception:
+            doc = None
+        if isinstance(doc, dict) and "sources" in doc:
+            for path, obj in doc["sources"].items():
+                sources[path] = {"content": obj.get("content", "")}
+            settings = doc.get("settings", {}) or {}
+        elif isinstance(doc, dict):
+            for path, obj in doc.items():
+                if isinstance(obj, dict) and "content" in obj:
+                    sources[path] = {"content": obj["content"]}
+    if not sources:
+        sources = {f"{name or 'Contract'}.sol": {"content": raw}}
+    opt = {"enabled": str(result0.get("OptimizationUsed", "0")) == "1",
+           "runs": int(result0.get("Runs", 200) or 200)}
+    md = {"compiler": {"version": result0.get("CompilerVersion", "")},
+          "settings": {"optimizer": opt, "remappings": settings.get("remappings", []),
+                       "viaIR": bool(settings.get("viaIR", False)),
+                       "evmVersion": result0.get("EVMVersion") or settings.get("evmVersion")}}
+    return {"sources": sources, "metadata": md, "compilation": {"name": name}}
+
+
+def fetch_etherscan(address: str, chain: int = 1, timeout: int = 40) -> dict | None:
+    key = os.environ.get("ETHERSCAN_API_KEY")
+    if not key:
+        return None
+    url = (f"https://api.etherscan.io/v2/api?chainid={chain}&module=contract"
+           f"&action=getsourcecode&address={address}&apikey={key}")
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            doc = json.loads(r.read())
+    except Exception:
+        return None
+    res = doc.get("result")
+    if not isinstance(res, list) or not res:
+        return None
+    return parse_etherscan_source(res[0])
+
+
 def ingest_onchain(address: str, chain: int, dest: str) -> dict | None:
-    d = fetch_sourcify(address, chain)
+    d = fetch_sourcify(address, chain) or fetch_etherscan(address, chain)
     if not d:
         return None
     info = materialize(d, dest)

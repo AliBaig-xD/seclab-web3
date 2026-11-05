@@ -19,6 +19,14 @@ class ScopeGate:
             doc = yaml.safe_load(fh) or {}
         self.records = {t["id"]: t for t in doc.get("targets", [])}
 
+    @classmethod
+    def ephemeral(cls, target_id: str, basis: str, poc_allowed: bool = False,
+                  affirmed_by: str = "operator") -> "ScopeGate":
+        g = cls.__new__(cls)
+        g.records = {target_id: {"id": target_id, "basis": basis,
+                                 "poc_allowed": poc_allowed, "affirmed_by": affirmed_by}}
+        return g
+
     def assert_authorized(self, target_id: str, poc: bool = False) -> dict:
         r = self.records.get(target_id)
         if not r:

@@ -1,6 +1,6 @@
 """seclab-web3 CLI. `python3 -m orchestrator.cli scan <target_dir> ...`"""
 from __future__ import annotations
-import argparse, os, time
+import argparse, os, subprocess, time
 from .authorization import ScopeGate
 from .evidence import EvidenceStore
 from .pipeline import Pipeline
@@ -20,7 +20,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="seclab-web3")
     ap.add_argument("cmd", choices=["scan"])
-    ap.add_argument("target")
+    ap.add_argument("target", nargs="?")
+    ap.add_argument("--onchain", help="deployed address to ingest via Sourcify")
+    ap.add_argument("--chain", type=int, default=1)
+    ap.add_argument("--basis", help="authorization basis for on-chain: own|bounty:<p>|engagement:<id>")
     ap.add_argument("--target-id")
     ap.add_argument("--poc-test")
     ap.add_argument("--poc-family", default="reentrancy")
@@ -33,10 +36,28 @@ def main(argv=None):
     a = ap.parse_args(argv)
 
     os.chdir(ROOT)
-    target = os.path.abspath(a.target)
-    tid = a.target_id or os.path.basename(target.rstrip("/"))
-
-    gate = ScopeGate(os.path.join(ROOT, "config", "authorization.yaml"))
+    if a.onchain:
+        from .onchain import ingest_onchain
+        import os as _os
+        scratch = _os.environ.get("SECLAB_SCRATCH", "/opt/dlami/nvme/seclab")
+        addr = a.onchain
+        target = f"{scratch}/onchain-{addr.lower()}"
+        subprocess.run(["sudo", "rm", "-rf", target])
+        info = ingest_onchain(addr, a.chain, target)
+        if not info:
+            print(f"[onchain] no verified source for {addr} on chain {a.chain}")
+            return 2
+        tid = a.target_id or addr.lower()
+        print(f"[onchain] ingested {addr}: solc={info['solc']} files={info['nfiles']} main={info['main']}")
+        if not a.basis:
+            print("[auth] on-chain target requires --basis (own|bounty:<p>|engagement:<id>)")
+            return 2
+        gate = ScopeGate.ephemeral(tid, a.basis, poc_allowed=bool(a.poc_test),
+                                   affirmed_by="dev@archrco.com")
+    else:
+        target = os.path.abspath(a.target)
+        tid = a.target_id or os.path.basename(target.rstrip("/"))
+        gate = ScopeGate(os.path.join(ROOT, "config", "authorization.yaml"))
     rec = gate.assert_authorized(tid, poc=bool(a.poc_test))
     print(f"[auth] {tid}: basis={rec.get('basis')} poc={bool(a.poc_test)} OK")
 

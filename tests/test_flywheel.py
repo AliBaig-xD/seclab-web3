@@ -5,7 +5,11 @@ from orchestrator.flywheel import emit_training_examples
 
 def test_emit_detection_and_poc(tmp_path):
     poc = tmp_path / "poc.sol"
-    poc.write_text("// SPDX\ncontract PoC is Test { function test_exploit() public { require(true); } }")
+    poc.write_text(
+        "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n"
+        "import \"../src/Vault.sol\";\ncontract PoC is Test {\n"
+        "    Vault v;\n    function setUp() public { v = new Vault(); }\n"
+        "    function test_exploit() public { require(address(v).balance == 0, \"drained\"); }\n}\n")
     f = Finding(hypothesis=Hypothesis("reentrancy", "src/Vault.sol:8", "p", "drains funds"),
                 evidence=[Evidence(kind="foundry_poc", tool="forge", summary="x", repro="r",
                                    artifact_path=str(poc))], repro_cmd="r")

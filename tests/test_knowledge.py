@@ -23,3 +23,19 @@ def test_kb_seed(tmp_path):
     assert n >= 10 and kb.count() == n
     hits = kb.query("price oracle flash loan manipulation collateral")
     assert any("Oracle" in h["title"] for h in hits)
+
+
+def test_researcher_uses_kb_grounding(tmp_path):
+    from orchestrator.knowledge import KnowledgeBase
+    from orchestrator.researcher import Researcher
+    kb = KnowledgeBase(str(tmp_path / "kb.db"))
+    kb.add("vulnclass", "Reentrancy", "external call before state update re-enter withdraw drain")
+    captured = {}
+
+    class C:
+        def generate(self, prompt, system=None):
+            captured["prompt"] = prompt
+            return "[]"
+    Researcher(C(), kb=kb).hypothesize("function withdraw() { msg.sender.call{value:b}(''); balances=0; }")
+    assert "Relevant vulnerability knowledge" in captured["prompt"]
+    assert "Reentrancy" in captured["prompt"]

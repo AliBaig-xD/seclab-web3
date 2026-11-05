@@ -34,6 +34,7 @@ def main(argv=None):
     ap.add_argument("--swarm", action="store_true", help="graph-sliced map-reduce hypothesis engine")
     ap.add_argument("--swarm-concurrency", type=int, default=1)
     ap.add_argument("--exploit", action="store_true", help="LLM-generate+run Foundry PoCs to prove candidates")
+    ap.add_argument("--rag", action="store_true", help="ground the hunter in the vuln knowledge base")
     a = ap.parse_args(argv)
 
     os.chdir(ROOT)
@@ -89,7 +90,14 @@ def main(argv=None):
         if client.available():
             from .reviewer import LLMReviewer
             from .protocol import ProtocolIntelligence
-            researcher = Researcher(client)
+            kb = None
+            if a.rag:
+                from .knowledge import KnowledgeBase
+                kb = KnowledgeBase(os.path.join(ROOT, "knowledge", "kb.db"))
+                if kb.count() == 0:
+                    kb.seed_from_cards(os.path.join(ROOT, "knowledge", "cards.json"))
+                print(f"[rag] knowledge base: {kb.count()} cards")
+            researcher = Researcher(client, kb=kb)
             reviewer = LLMReviewer(client)
             protocol = ProtocolIntelligence(client)
             if a.exploit:
@@ -108,7 +116,7 @@ def main(argv=None):
                 srcs = {c["contract"]: source_for_contract(files, c["contract"])
                         for c in ci.get("contracts", [])}
                 pm = protocol.analyze(llm_code)
-                eng = SwarmEngine(client, concurrency=a.swarm_concurrency)
+                eng = SwarmEngine(client, concurrency=a.swarm_concurrency, kb=kb)
                 seed = eng.run(slices, pairs, srcs, pm)
                 print(f"[swarm] slices={eng.stats['slices']} deep={eng.stats['deep']} "
                       f"pairs={eng.stats['pairs']} hypotheses={len(seed)}")

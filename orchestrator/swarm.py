@@ -87,16 +87,22 @@ def slice_source(src: str, contract: str, func_names: list[str], limit: int = 12
 
 
 class SwarmEngine:
-    def __init__(self, client, concurrency: int = 1, deep: bool = True, max_pairs: int = 8):
+    def __init__(self, client, concurrency: int = 1, deep: bool = True, max_pairs: int = 8, kb=None):
         self.client = client
         self.concurrency = max(1, concurrency)
         self.deep = deep
         self.max_pairs = max_pairs
+        self.kb = kb
         self.stats = {"slices": 0, "deep": 0, "pairs": 0}
 
     # ---------- map ----------
     def hunt_slice(self, sl: dict, code: str, header: str) -> list[Hypothesis]:
-        prompt = (f"<PROTOCOL_CONTEXT>\n{header}\n</PROTOCOL_CONTEXT>\n"
+        kb_hint = ""
+        if self.kb is not None:
+            cards = self.kb.query(code[:1500], k=2)
+            if cards:
+                kb_hint = "<KNOWLEDGE>\n" + "\n".join(f"- {c['title']}: {c['text'][:180]}" for c in cards) + "\n</KNOWLEDGE>\n"
+        prompt = (kb_hint + f"<PROTOCOL_CONTEXT>\n{header}\n</PROTOCOL_CONTEXT>\n"
                   f"SLICE {sl['id']} | entry={sl['entry']} | state={', '.join(sl['state'])} | "
                   f"roles={', '.join(sl['roles']) or 'none'} | privileged={sl['privileged']} | "
                   f"payable={sl['payable']} | low_level_call={sl['low_level']}\n"

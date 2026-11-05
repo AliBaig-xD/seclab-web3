@@ -18,3 +18,4 @@ eval/corpus/**/out/
 eval/corpus/**/cache/
 eval/corpus/**/broadcast/
 eval/corpus/**/lib/
+knowledge/kb.db

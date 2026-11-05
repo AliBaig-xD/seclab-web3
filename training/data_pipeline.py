@@ -114,9 +114,130 @@ def load_smartbugs(base: str) -> list[Example]:
     return out
 
 
+
+
+def load_solidifi(base: str) -> list[Example]:
+    import csv
+    bc = os.path.join(base, "buggy_contracts")
+    res = os.path.join(base, "results")
+    CLS = {"Overflow-Underflow": "arithmetic", "Re-entrancy": "reentrancy", "TOD": "front_running",
+           "Timestamp-Dependency": "time_manipulation", "Unchecked-Send": "unchecked_low_level_calls",
+           "Unhandled-Exceptions": "unchecked_low_level_calls", "tx.origin": "access_control"}
+    out = []
+    if not os.path.isdir(bc):
+        return out
+    for bug_dir in sorted(os.listdir(bc)):
+        cls = CLS.get(bug_dir, bug_dir.lower())
+        for f in sorted(glob.glob(os.path.join(bc, bug_dir, "*.sol"))):
+            try:
+                src = _norm(open(f, errors="ignore").read())
+            except Exception:
+                continue
+            if len(src) < 200 or len(src) > 24000:
+                continue
+            idx = re.search(r"(\d+)", os.path.basename(f))
+            lines = []
+            if idx:
+                log = os.path.join(res, bug_dir, f"BugLog_{idx.group(1)}.csv")
+                if os.path.exists(log):
+                    try:
+                        for row in csv.DictReader(open(log)):
+                            loc = (row.get("loc") or "").strip()
+                            if loc.isdigit():
+                                lines.append(int(loc))
+                    except Exception:
+                        pass
+            lines = sorted(set(lines))[:8]
+            loc = f"around line(s) {', '.join(map(str, lines))}" if lines else "in the contract"
+            out.append(Example("A", cls,
+                               "Analyze this Solidity contract for security vulnerabilities. Name the "
+                               "vulnerability class and where it occurs, and explain the root cause.",
+                               src, f"Vulnerability: {cls} {loc}.\nRoot cause: {CLASS_EXPLAIN.get(cls, 'a security-relevant issue')}.",
+                               "solidifi", "mixed-public-etherscan", _sha(src)))
+    return out
+
+
+def load_not_so_smart(base: str) -> list[Example]:
+    out = []
+    for d in sorted(glob.glob(os.path.join(base, "*"))):
+        if not os.path.isdir(d):
+            continue
+        cls = os.path.basename(d).lower()
+        readme = os.path.join(d, "README.md")
+        expl = ""
+        if os.path.exists(readme):
+            expl = re.sub(r"[#*`>|\[\]()]", " ", open(readme, errors="ignore").read())
+            expl = re.sub(r"\s+", " ", expl).strip()[:600]
+        for f in glob.glob(os.path.join(d, "**", "*.sol"), recursive=True):
+            try:
+                src = _norm(open(f, errors="ignore").read())
+            except Exception:
+                continue
+            if len(src) < 150 or len(src) > 24000:
+                continue
+            out.append(Example("A", cls,
+                               "Analyze this Solidity contract for security vulnerabilities and explain the "
+                               "root cause and how to exploit it.",
+                               src, f"Vulnerability class: {cls}.\n{expl}" if expl else f"Vulnerability class: {cls}.",
+                               "not-so-smart-contracts", "Apache-2.0", _sha(src)))
+    return out
+
+
+def load_defihacklabs(base: str) -> list[Example]:
+    out = []
+    for f in sorted(glob.glob(os.path.join(base, "src", "test", "**", "*.sol"), recursive=True)):
+        try:
+            poc = open(f, errors="ignore").read()
+        except Exception:
+            continue
+        if "is Test" not in poc or len(poc) > 16000 or len(poc) < 400:
+            continue
+        name = re.sub(r"[_-]?exp(loit)?\.(t\.)?sol$", "", os.path.basename(f), flags=re.I)
+        name = name.replace("_", " ").strip() or "the"
+        ref = ""
+        m = re.search(r"https?://\S+", poc)
+        if m:
+            ref = f" Reference: {m.group(0).rstrip('*/ ')}"
+        out.append(Example("C", "exploit-poc",
+                           f"Write a Foundry PoC test that reproduces the {name} exploit.{ref}",
+                           "", _norm(poc),
+                           "DeFiHackLabs", "Apache-2.0", _sha(poc)))
+    return out
+
+
+def load_web3bugs(base: str) -> list[Example]:
+    import csv
+    f = os.path.join(base, "results", "bugs.csv")
+    if not os.path.exists(f):
+        return []
+    out = []
+    KW = {"reentran": "reentrancy", "oracle": "oracle-manipulation", "access": "access_control",
+          "overflow": "arithmetic", "underflow": "arithmetic", "rounding": "arithmetic",
+          "flash": "flash-loan", "signature": "signature-replay", "delegatecall": "delegatecall",
+          "slippage": "front_running", "liquidat": "defi-liquidation"}
+    for row in csv.DictReader(open(f)):
+        desc = (row.get(" Bug Description") or row.get("Bug Description") or "").strip().strip('"')
+        if len(desc) < 25:
+            continue
+        ref = (row.get(" Reference") or "").strip()
+        bid = (row.get(" Bug ID") or "?").strip()
+        cls = next((v for k, v in KW.items() if k in desc.lower()), "audit-finding")
+        out.append(Example("B", cls,
+                           "A security auditor reported the following finding in a DeFi protocol. Explain the "
+                           "vulnerability class, the mechanism, and why it is serious.",
+                           f"Finding {bid}: {desc}",
+                           f"This is a {cls} issue. {desc}" + (f" (Reference: {ref})" if ref else ""),
+                           "Web3Bugs", "MIT", _sha(bid + desc)))
+    return out
+
+
 LOADERS = {
     "corpus": lambda: load_corpus(),
     "smartbugs": lambda: load_smartbugs(os.path.join(SCRATCH, "datasets", "smartbugs-curated")),
+    "solidifi": lambda: load_solidifi(os.path.join(SCRATCH, "datasets", "solidifi")),
+    "not_so_smart": lambda: load_not_so_smart(os.path.join(SCRATCH, "datasets", "not-so-smart")),
+    "defihacklabs": lambda: load_defihacklabs(os.path.join(SCRATCH, "datasets", "defihacklabs")),
+    "web3bugs": lambda: load_web3bugs(os.path.join(SCRATCH, "datasets", "web3bugs")),
 }
 
 
@@ -178,7 +299,7 @@ def write(examples: list[Example], out_dir: str, per_source: dict):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sources", nargs="+", default=["corpus", "smartbugs"])
+    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs"])
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "training", "data"))
     a = ap.parse_args()
     examples, per_source = curate(a.sources)

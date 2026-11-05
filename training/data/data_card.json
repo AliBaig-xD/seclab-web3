@@ -1,37 +1,59 @@
 {
-  "generated": "2026-11-05T03:03:31",
-  "total": 144,
+  "generated": "2026-11-05T03:06:30",
+  "total": 1604,
   "splits": {
-    "train": 91,
-    "val": 25,
-    "test": 28
+    "train": 1107,
+    "val": 229,
+    "test": 268
   },
   "by_capability": {
-    "A": 143,
-    "C": 1
+    "C": 645,
+    "A": 483,
+    "B": 476
   },
   "by_class": {
-    "unchecked_low_level_calls": 51,
-    "reentrancy": 32,
-    "access_control": 18,
-    "arithmetic": 16,
-    "bad_randomness": 7,
-    "denial_of_service": 6,
-    "time_manipulation": 5,
-    "front_running": 4,
+    "exploit-poc": 644,
+    "audit-finding": 405,
+    "unchecked_low_level_calls": 146,
+    "reentrancy": 90,
+    "access_control": 73,
+    "arithmetic": 69,
+    "time_manipulation": 51,
+    "front_running": 48,
+    "flash-loan": 15,
+    "oracle-manipulation": 13,
+    "bad_randomness": 8,
+    "denial_of_service": 8,
+    "defi-liquidation": 7,
+    "honeypots": 6,
+    "signature-replay": 5,
     "other": 3,
+    "incorrect_interface": 2,
+    "unprotected_function": 2,
+    "wrong_constructor_name": 2,
     "invariant": 1,
-    "short_addresses": 1
+    "short_addresses": 1,
+    "forced_ether_reception": 1,
+    "integer_overflow": 1,
+    "race_condition": 1,
+    "unchecked_external_call": 1,
+    "variable shadowing": 1
   },
   "sources_loaded": {
     "corpus": 4,
-    "smartbugs": 140
+    "smartbugs": 140,
+    "solidifi": 323,
+    "not_so_smart": 23,
+    "defihacklabs": 644,
+    "web3bugs": 476
   },
   "licenses": [
     "Apache-2.0",
+    "MIT",
+    "mixed-public-etherscan",
     "proprietary-internal"
   ],
-  "unique_contracts": 143,
-  "dataset_hash": "07d178f8aee5ca705300c0dd72966fbf9e2c7f6c1af92416cb8c0caa5d7fef72",
+  "unique_contracts": 1603,
+  "dataset_hash": "75aed8e9fe961b0607f88c9fa15dd4dcf014d0248031db479e72566c6019259e",
   "leakage_control": "split assigned per contract_sha; no contract spans splits"
 }

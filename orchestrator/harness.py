@@ -115,7 +115,7 @@ class ResearchHarness:
         return researcher, reviewer, protocol, seed, exploiter, pm
         
 
-    def run(self, *, local=None, onchain=None, chain=1, basis=None, target_id=None,
+    def run(self, *, local=None, onchain=None, repo=None, chain=1, basis=None, target_id=None,
             opt: ScanOptions = None, run_id=None) -> dict:
         opt = opt or ScanOptions()
         run_id = run_id or f"run-{int(time.time())}"
@@ -131,7 +131,23 @@ class ResearchHarness:
 
         # --- ingest + authorize ---
         phase("ingest")
-        if onchain:
+        if repo:
+            from .ingest import clone_repo
+            scratch = os.environ.get("SECLAB_SCRATCH", "/opt/dlami/nvme/seclab")
+            name = (target_id or repo.rstrip("/").split("/")[-1].replace(".git", "")).lower()
+            dest = f"{scratch}/repo-{name}"
+            log.info(f"cloning {repo} ...")
+            local = clone_repo(repo, dest)
+            if not local:
+                log.error(f"clone failed: {repo}")
+                return {"error": "clone-failed", "run_dir": run_dir}
+            tid = name
+            if not basis:
+                log.error("repo scan requires an authorization basis (--basis)")
+                return {"error": "no-authorization-basis", "run_dir": run_dir}
+            gate = ScopeGate.ephemeral(tid, basis, poc_allowed=bool(opt.poc_test), affirmed_by="dev@archrco.com")
+            target = local
+        elif onchain:
             from .onchain import ingest_onchain
             scratch = os.environ.get("SECLAB_SCRATCH", "/opt/dlami/nvme/seclab")
             target = f"{scratch}/onchain-{onchain.lower()}"

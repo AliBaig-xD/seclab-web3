@@ -47,6 +47,12 @@ def cmd_onchain(a):
     return 2 if "error" in r else 0
 
 
+def cmd_repo(a):
+    r = ResearchHarness().run(repo=a.url, basis=a.basis, opt=_opts(a),
+                              target_id=a.target_id, run_id=a.run_id)
+    return 2 if "error" in r else 0
+
+
 def cmd_benchmark(a):
     from .labeval import run
     print(json.dumps(run(full=not a.fast), indent=2))
@@ -92,6 +98,11 @@ def main(argv=None):
     s.add_argument("target")
     _add_engine_flags(s)
     s.set_defaults(fn=cmd_scan)
+    rp = sub.add_parser("repo", help="clone a git repo URL and scan it")
+    rp.add_argument("url")
+    rp.add_argument("--basis", required=True)
+    _add_engine_flags(rp)
+    rp.set_defaults(fn=cmd_repo)
     o = sub.add_parser("onchain", help="scan a deployed verified contract")
     o.add_argument("address")
     o.add_argument("--chain", type=int, default=1)

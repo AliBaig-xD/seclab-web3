@@ -51,3 +51,15 @@ def source_for_contract(files: dict, contract: str) -> str:
         if pat.search(src):
             return src
     return ""
+
+
+def clone_repo(url: str, dest: str, timeout: int = 300):
+    """Clone a git repo (with submodules, shallow) for scanning. Returns dest or None."""
+    import subprocess
+    subprocess.run(["sudo", "rm", "-rf", dest])
+    try:
+        r = subprocess.run(["git", "clone", "--recurse-submodules", "--depth", "1", url, dest],
+                           capture_output=True, text=True, timeout=timeout)
+    except Exception:
+        return None
+    return dest if (r.returncode == 0 and os.path.isdir(dest)) else None

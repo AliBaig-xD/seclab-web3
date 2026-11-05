@@ -54,3 +54,12 @@ evaluated_rejected:
   CoderDamien/smart-contract-vuln-dataset: tiny (1.5MB), re-packaged public sets — dup risk
   Zellic/smart-contract-fiesta: large UNLABELED corpus — useful as scan targets, not training labels
   Fernan7w7/evm-trace-dataset: execution traces, wrong modality for source-level vuln training
+
+# --- batch 2 (verified 2026-11-05): kept 3 of 6 ---
+SWC-registry:   {url: https://github.com/SmartContractSecurity/SWC-registry, license: MIT, kind: canonical weakness classes (B knowledge), used: 37}
+damn-vulnerable-defi: {url: https://github.com/theredguild/damn-vulnerable-defi, license: MIT, kind: famous DeFi vuln contracts (A), used: 36, note: hand-mapped challenge->class}
+learn-evm-attacks: {url: https://github.com/coinspect/learn-evm-attacks, license: MIT, kind: real hack Foundry repros (C), used: 42}
+evaluated_rejected_batch2:
+  OpenZeppelin/ethernaut: AGPL copyleft -> prod-grade license caution; patterns covered by SWC/DVD
+  sanbir/evm-hack-poc: NO LICENSE + 797M blobs + zero extractable .sol
+  kismp123/smart-contract-review-reports: NO LICENSE + heavy FORGE overlap (both are audit reports)

@@ -351,7 +351,7 @@ FORGE_NOISE = re.compile(
     r"style guide|coding style|code quality|magic number|floating pragma|pragma version|lock the pragma|"
     r"outdated solidity|solidity version|missing event|event emission|emit an event|lack of event|"
     r"redundant|readability|cosmetic|best practice|named return|immutable keyword|constant keyword|"
-    r"use of safemath|boilerplate|informational")
+    r"use of safemath|boilerplate|informational|usage of .*assembly|use of inline assembly|out of gas|should be declared (external|constant|immutable)|mark .*(constant|immutable)|revert (string|reason)|custom error|unlocked pragma|unspecific compiler|visibility (should|could)")
 
 
 def _forge_emit(findings, project_key, lic, resolve, out):
@@ -503,6 +503,109 @@ def load_cve(base: str) -> list[Example]:
     return out
 
 
+
+# ---------------- SWC registry (37 canonical weakness classes, MIT) ----------------
+def load_swc(base: str) -> list[Example]:
+    out: list[Example] = []
+    for f in sorted(glob.glob(os.path.join(base, "entries", "docs", "SWC-*.md"))):
+        try:
+            md = open(f, errors="ignore").read()
+        except Exception:
+            continue
+        swc = os.path.basename(f).replace(".md", "")
+        mt = re.search(r"# Title\s*\n+(.+)", md)
+        title = mt.group(1).strip() if mt else swc
+        md2 = re.split(r"#+\s*Description", md, 1)
+        desc = ""
+        if len(md2) > 1:
+            desc = re.split(r"\n#+\s", md2[1], 1)[0].strip()
+        mc = re.search(r"\[(CWE-\d+[^\]]*)\]", md)
+        cwe = mc.group(1) if mc else ""
+        if len(desc) < 40:
+            continue
+        out.append(Example("B", "audit-finding",
+                           "Explain this smart-contract weakness class, its root cause, and how to prevent it.",
+                           f"{swc}: {title}",
+                           f"{title}. {desc}" + (f" (Related: {cwe})" if cwe else ""),
+                           "SWC-registry", "MIT", _sha(swc + title)))
+    return out
+
+
+# ---------------- Damn Vulnerable DeFi (famous DeFi vuln patterns, MIT) ----------------
+DVD_MAP = {
+    "unstoppable": ("denial_of_service", "a flash-loan invariant (totalAssets vs token balance) is permanently broken by a direct token donation, freezing the vault"),
+    "naive-receiver": ("access_control", "the flash-loan receiver pays the fee on any caller's behalf, so anyone can repeatedly drain it"),
+    "truster": ("other", "the pool makes an arbitrary external call with attacker-controlled target and data during a flash loan, enabling an approve() to the attacker"),
+    "side-entrance": ("reentrancy", "funds deposited inside the flash-loan callback satisfy the repayment balance check while leaving the attacker a withdrawable balance"),
+    "the-rewarder": ("front_running", "rewards are computed from a snapshot that can be gamed by depositing immediately before distribution"),
+    "selfie": ("access_control", "a flash loan grants enough governance votes to queue a privileged action that drains the pool"),
+    "compromised": ("oracle-manipulation", "an off-chain price feed with leaked signer keys can be set to arbitrary prices"),
+    "puppet": ("oracle-manipulation", "collateral is priced from a manipulable Uniswap v1 spot price"),
+    "puppet-v2": ("oracle-manipulation", "collateral is priced from a manipulable Uniswap v2 spot reserve ratio"),
+    "puppet-v3": ("oracle-manipulation", "a short-window Uniswap v3 TWAP is manipulated within a block to underprice collateral"),
+    "free-rider": ("other", "the NFT marketplace pays the buyer from its own balance, so a single payment buys every listed NFT"),
+    "backdoor": ("access_control", "a Gnosis Safe setup delegatecall installs a module letting the registry owner drain created wallets"),
+    "climber": ("access_control", "the timelock executes queued operations before verifying roles, letting an attacker seize admin"),
+    "wallet-mining": ("access_control", "deterministic deployment lets an attacker control a pre-funded wallet address"),
+    "abi-smuggling": ("access_control", "calldata offset manipulation bypasses a function-selector allowlist to reach a restricted function"),
+    "curvy-puppet": ("oracle-manipulation", "collateral is priced via a manipulable Curve pool oracle"),
+    "shards": ("arithmetic", "rounding in share accounting lets an attacker accumulate value"),
+}
+
+
+def load_dvd(base: str) -> list[Example]:
+    out: list[Example] = []
+    src = os.path.join(base, "src")
+    for ch in sorted(os.listdir(src)) if os.path.isdir(src) else []:
+        d = os.path.join(src, ch)
+        if not os.path.isdir(d) or ch not in DVD_MAP:
+            continue
+        cls, desc = DVD_MAP[ch]
+        for f in sorted(glob.glob(os.path.join(d, "*.sol"))):
+            b = os.path.basename(f)
+            if b.startswith("I") and b[1:2].isupper():      # interface
+                continue
+            if b.startswith("DamnValuable"):                 # shared tokens
+                continue
+            try:
+                code = _norm(open(f, errors="ignore").read())
+            except Exception:
+                continue
+            if not (200 <= len(code) <= 20000):
+                continue
+            out.append(Example("A", cls,
+                               "Analyze this Solidity contract for the security vulnerability it contains. "
+                               "Name the vulnerability class and explain the root cause.",
+                               code,
+                               f"Vulnerability: {cls}.\nRoot cause: {desc}.",
+                               "damn-vulnerable-defi", "MIT", _sha(code)))
+    return out
+
+
+# ---------------- coinspect/learn-evm-attacks (real hack Foundry repros, MIT) ----------------
+def load_learn_evm_attacks(base: str) -> list[Example]:
+    out: list[Example] = []
+    for f in glob.glob(os.path.join(base, "test", "**", "*.sol"), recursive=True):
+        low = f.lower()
+        if any(x in low for x in ("/lib/", "/utils/", "/modules/", "/interfaces/", "/src/")):
+            continue
+        try:
+            poc = open(f, errors="ignore").read()
+        except Exception:
+            continue
+        if "is Test" not in poc or "function test" not in poc:
+            continue
+        if not (500 <= len(poc) <= 16000):
+            continue
+        name = re.sub(r"[_.-]?(exploit|attack|test|t)\.sol$", "", os.path.basename(f), flags=re.I)
+        name = re.sub(r"(?<!^)(?=[A-Z])", " ", name).replace("_", " ").strip() or "the"
+        out.append(Example("C", "exploit-poc",
+                           f"Write a Foundry PoC test that reproduces the {name} exploit on a mainnet fork.",
+                           "", _norm(poc),
+                           "learn-evm-attacks", "MIT", _sha(poc)))
+    return out
+
+
 LOADERS = {
     "corpus": lambda: load_corpus(),
     "smartbugs": lambda: load_smartbugs(os.path.join(SCRATCH, "datasets", "smartbugs-curated")),
@@ -511,6 +614,9 @@ LOADERS = {
     "defihacklabs": lambda: load_defihacklabs(os.path.join(SCRATCH, "datasets", "defihacklabs")),
     "forge": lambda: load_forge(os.path.join(SCRATCH, "datasets", "FORGE-Curated"), os.path.join(SCRATCH, "datasets", "FORGE-Artifacts")),
     "cve": lambda: load_cve(os.path.join(SCRATCH, "datasets", "CVE-Smart-Contracts")),
+    "swc": lambda: load_swc(os.path.join(SCRATCH, "datasets", "swc-registry")),
+    "dvd": lambda: load_dvd(os.path.join(SCRATCH, "datasets", "damn-vulnerable-defi")),
+    "learn_evm_attacks": lambda: load_learn_evm_attacks(os.path.join(SCRATCH, "datasets", "learn-evm-attacks")),
 }
 
 
@@ -600,7 +706,7 @@ def write(examples: list[Example], out_dir: str, per_source: dict):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild","verified","forge","cve"])
+    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild","verified","forge","cve","swc","dvd","learn_evm_attacks"])
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "training", "data"))
     a = ap.parse_args()
     examples, per_source = curate(a.sources)

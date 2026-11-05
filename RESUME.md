@@ -64,3 +64,18 @@ ollama). Remaining big levers: Go/Rust client analyzer, web dashboard, Dockerfil
 `SCOPE.md` · `docs/WORKFLOW.md` (law) · `docs/IMPLEMENTATION_PLAN.md` (phases+gates) ·
 `docs/DECISIONS.md` (why) · `WORKLOG.md` (history) · `orchestrator/` (harness) ·
 `tests/` · `docker/` (toolchain) · `scripts/` (provision/doctor/test/sync).
+
+
+## Training dataset (expanded 2026-11-05)
+- Baseline set `training/data/` = 1,661 examples (the run in progress trained on this).
+- CURATED set `training/data_prod/` = **19,520** examples (13,848 train) — the retrain target.
+  Sources (verified, provenance+license in config/datasets.yaml): FORGE 16,842 (27k real audit
+  findings, security-gated: Info/N-A + gas/style/docs dropped), CVE-Smart-Contracts 956 (reviewed
+  matches), DeFiHackLabs 644, Web3Bugs 476, SolidiFI 323, SmartBugs 140, DeFiVulnLabs 57,
+  SWC-registry 37, Damn-Vulnerable-DeFi 36, learn-evm-attacks 42, corpus 4.
+  Caps: B 16,833 / A 2,000 / C 687. Leakage-safe split by report/contract (hard assertion passes).
+- FULL set `training/data_full/` = 33,876 (everything incl noise; SECLAB_FORGE_ALL=1) — comparison only.
+- Quality gate: FORGE_NOISE regex + severity floor in training/data_pipeline.py; Info/N-A dropped,
+  gas/style/docs/assembly-usage noise dropped. Rejected sources recorded (ethernaut AGPL, evm-hack-poc
+  no-license, review-reports no-license/dup, smartbugs-wild unlabeled, fiesta unlabeled).
+- NEXT: when baseline run finishes, retrain on data_prod (seq_len 2048, epochs 2), then eval vs baseline.

@@ -2,7 +2,7 @@
 server: ollama                 # ollama | vllm | llamacpp
 endpoint: "http://127.0.0.1:11434"
 model_ref: "qwen2.5-coder:14b"
-revision: null                 # frozen digest, filled by provision
+revision: "9ec8897f747e"   # qwen2.5-coder:14b (frozen)
 quantization: "Q4_K_M"
 context_tokens: 16384
 # Determinism (WORKFLOW Layer 2): temp 0 + fixed seed; doctor records output hash.

@@ -33,3 +33,11 @@ Format: `date · phase · action · command/evidence · result · gate`
 - Fixes: aderyn asset picker grabbed the -update installer (now excludes update/installer
   and handles .tar.xz); doctor used a login shell that wiped foundry's PATH (now bash -c).
 - Pushing enabled (D7 update).
+
+## 2026-11-05 · Phase 1 · GATE PASSED (doctor ALL GREEN)
+- Verified: forge/anvil/cast 1.9.0, slither 0.11.6, semgrep 1.183.0, halmos 0.3.3,
+  echidna 2.4.0, medusa 1.5.1, aderyn 0.6.8, solc 0.8.28, mythril v0.24.8 (isolated),
+  model qwen2.5-coder:14b deterministic probe OK.
+- Froze versions in config/versions.env; captured docker/requirements.lock.txt; pinned model digest.
+- Follow-up (Phase 1 hardening, tracked): rebuild Dockerfile from pinned tags + lock for byte-repro.
+- Gate: PASS. Phase 1 DONE.

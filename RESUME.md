@@ -37,17 +37,17 @@ evidence or an executable PoC**. Full scope in `SCOPE.md`; the law is `docs/WORK
 
 ## STATUS — as of 2026-11-05 (UPDATE THIS at each phase boundary)
 - Phase 0 (governance): DONE.
-- Phase 1 (reproducible env): model server GREEN (14B, deterministic probe OK);
-  analysis image built; **doctor gate finishing** — aderyn asset-picker + doctor
-  login-shell bugs fixed, rebuild in progress. Resolved tool versions logged in WORKLOG
-  (slither 0.11.6, semgrep 1.183.0, halmos 0.3.3, echidna 2.4.0, medusa 1.5.1,
-  mythril v0.24.8 isolated image, solc 0.8.28, foundry forge 1.9.0).
-- Harness code DONE + unit-tested (34 tests, `bash scripts/test.sh`):
-  schema, evidence store, authorization scope gate, config, model_client, runner,
-  slither parser, researcher (injection-fenced), triage, report. NOT yet wired to real tools.
-- NEXT: finish Phase 1 gate (doctor all-green) -> Phase 3/4: wire the REAL verifiers
-  (slither/semgrep/halmos/echidna/medusa + Foundry fork-PoC) and prove the full chain
-  end-to-end on a known-vulnerable contract (reentrancy -> PoC drain on an Anvil fork).
+- Phase 1 (reproducible env): **DONE — doctor ALL GREEN.** Model server (14B, deterministic)
+  + full analysis toolchain verified. Versions frozen in config/versions.env +
+  docker/requirements.lock.txt. Re-verify anytime: `bash scripts/doctor.sh`.
+- Harness code DONE + unit-tested (34 tests, `bash scripts/test.sh`): schema, evidence
+  store, authorization scope gate, config, model_client, runner, slither parser,
+  researcher (injection-fenced), triage, report. NOT yet wired to real tools.
+- NEXT (Phase 3/4): wire the REAL verifiers (slither/semgrep/halmos/echidna/medusa +
+  Foundry fork-PoC) into the runner and prove the full chain end-to-end on a known
+  reentrancy contract (-> PoC drain on an Anvil fork). This is the key milestone.
+- TRACKED follow-up (Phase 1 hardening): rebuild Dockerfile from pinned tags + lock
+  for byte-level reproducibility.
 
 ## Map
 `SCOPE.md` · `docs/WORKFLOW.md` (law) · `docs/IMPLEMENTATION_PLAN.md` (phases+gates) ·

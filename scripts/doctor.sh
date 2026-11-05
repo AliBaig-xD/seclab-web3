@@ -23,12 +23,16 @@ else bad ollama; fi
 IMG=seclab-web3/analysis:latest
 if docker image inspect "$IMG" >/dev/null 2>&1; then
   for cmd in "forge --version" "anvil --version" "cast --version" "slither --version" \
-             "myth version" "semgrep --version" "halmos --version" \
+             "semgrep --version" "halmos --version" \
              "echidna --version" "medusa --version" "aderyn --version" "solc --version"; do
     out=$(docker run --rm "$IMG" bash -lc "$cmd" 2>&1 | head -1)
     if [ -n "$out" ] && ! echo "$out" | grep -qiE "not found|no such|error"; then ok "${cmd%% *}: $out"; else bad "${cmd%% *} ($out)"; fi
   done
 else bad "analysis image"; fi
+
+# isolated mythril image
+mv=$(docker run --rm mythril/myth version 2>&1 | head -1)
+if [ -n "$mv" ] && ! echo "$mv" | grep -qiE "no such|not found|error|unable"; then ok "mythril: $mv"; else bad "mythril image ($mv)"; fi
 
 echo "---" | tee -a "$OUT"
 if [ $fail -eq 0 ]; then echo "DOCTOR: ALL GREEN" | tee -a "$OUT"; else echo "DOCTOR: MISSING ITEMS" | tee -a "$OUT"; fi

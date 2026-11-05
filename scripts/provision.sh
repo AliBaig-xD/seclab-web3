@@ -22,12 +22,14 @@ stage_model(){
   docker exec seclab-ollama ollama list
 }
 stage_analysis(){ log "building analysis image..."; docker build -f docker/analysis.Dockerfile -t seclab-web3/analysis:latest .; }
+stage_symbolic(){ log "pulling isolated mythril image..."; docker pull mythril/myth:latest; }
 
 case "${1:-all}" in
   check) stage_check;;
   dirs) stage_dirs;;
   model) stage_dirs; stage_model;;
   analysis) stage_analysis;;
-  all) stage_check; stage_dirs; stage_model; stage_analysis; log "provision complete -> run scripts/doctor.sh";;
+  symbolic) stage_symbolic;;
+  all) stage_check; stage_dirs; stage_model; stage_analysis; stage_symbolic; log "provision complete -> run scripts/doctor.sh";;
   *) echo "usage: provision.sh [check|dirs|model|analysis|all]"; exit 2;;
 esac

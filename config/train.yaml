@@ -1,19 +1,33 @@
-# Phase 7 training config — switch the base model to train by editing THIS FILE.
-base_model: "Qwen/Qwen2.5-Coder-14B-Instruct"   # HF id; swap freely
+# Switch the base model to train by editing base_model (or --base). Everything below
+# is model- and hardware-agnostic: the same config scales to A100/multi-GPU unchanged.
+base_model: "Qwen/Qwen2.5-Coder-14B-Instruct"
 base_revision: "main"
-method: "qlora"                 # qlora | lora | full
-quantization: "nf4"             # 4-bit base for QLoRA
-lora: { r: 16, alpha: 32, dropout: 0.05, target_modules: "all-linear" }
+method: "qlora"            # qlora | lora | full
+quantization: "nf4"
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.05
+  target_modules: "all-linear"
 train:
-  seq_len: 4096
-  lr: 1.0e-4
+  seq_len: 2048
+  lr: 2.0e-4
   epochs: 3
   batch_size: 1
   grad_accum: 16
+  warmup_ratio: 0.03
+  weight_decay: 0.01
+  lr_scheduler: "cosine"
+  max_grad_norm: 0.3
+  logging_steps: 5
+  eval_steps: 50
+  save_steps: 50
+  save_total_limit: 3
   seed: 0
-  bf16: true
-eval:
-  holdout_split: "test"
-  metrics: ["recall", "fp_rate", "poc_repro_rate"]
+  optim: "paged_adamw_8bit"
+  attn_implementation: "sdpa"
+  group_by_length: true
 output_dir: "model/adapters"
-# Reproducibility: pinned requirements + seed; logs + eval report saved as artifacts.
+eval:
+  detection_accuracy: true
+  poc_structural: true

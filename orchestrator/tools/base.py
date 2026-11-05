@@ -22,4 +22,4 @@ def run_tool(target_dir: str, cmd: str, timeout: int = 900, image: str = IMAGE):
 class Verifier:
     kind = "base"
     def verify(self, hypothesis, target):  # pragma: no cover
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover (abstract interface)

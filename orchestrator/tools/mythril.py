@@ -1,6 +1,6 @@
 """Mythril adapter (isolated custom image). Symbolic analysis -> SWC issues mapped to
 vuln families, so results correlate with static findings (independent corroboration).
-Single-file mode now; multi-file via crytic-compile is a tracked TODO."""
+Multi-file via forge flatten; single-file direct."""
 from __future__ import annotations
 import json, os, re, glob, subprocess
 from ..schema import Hypothesis, Evidence

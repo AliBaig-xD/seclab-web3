@@ -51,6 +51,8 @@ def main(argv=None):
         verifiers.append(FoundryPoCVerifier(a.poc_test, a.poc_family))
 
     researcher = None
+    reviewer = None
+    protocol = None
     llm_code = None
     if a.llm:
         from .model_client import OllamaClient
@@ -60,18 +62,23 @@ def main(argv=None):
         mc = load_model_config()
         client = OllamaClient(mc["endpoint"], mc["model_ref"], mc.get("params"))
         if client.available():
+            from .reviewer import LLMReviewer
+            from .protocol import ProtocolIntelligence
             researcher = Researcher(client)
+            reviewer = LLMReviewer(client)
+            protocol = ProtocolIntelligence(client)
             llm_code = read_sources(target)
-            print(f"[llm] researcher enabled ({mc['model_ref']}), {len(llm_code)} chars of source")
+            print(f"[llm] researcher+reviewer+protocol enabled ({mc['model_ref']}), {len(llm_code)} chars")
         else:
             print("[llm] model endpoint unavailable; proceeding static-only")
 
     run_id = a.run_id or f"run-{int(time.time())}"
     print(f"[run] {run_id} scanning {target}")
-    findings = Pipeline(store, scanners, verifiers,
-                        researcher=researcher, llm_code=llm_code).run(run_id, target, tid)
+    pipe = Pipeline(store, scanners, verifiers, reviewer=reviewer,
+                    researcher=researcher, llm_code=llm_code, protocol=protocol)
+    findings = pipe.run(run_id, target, tid)
 
-    md = render_markdown({"target": tid, "run_id": run_id}, findings)
+    md = render_markdown({"target": tid, "run_id": run_id, "protocol": pipe.protocol_model}, findings)
     out = a.report or f"results/report-{run_id}.md"
     with open(out, "w") as fh:
         fh.write(md)

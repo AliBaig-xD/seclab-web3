@@ -25,6 +25,15 @@ def render_markdown(meta: dict, findings: list[Finding]) -> str:
         for e in f.evidence:
             L.append(f"  - [{e.kind}/{e.tool}] {e.summary}")
         L.append("")
+    proto = meta.get("protocol")
+    if proto and any(proto.get(k) for k in ("invariants", "roles", "assumptions", "questions")):
+        L += ["---", "## Protocol intelligence"]
+        for key, label in [("invariants", "Invariants"), ("roles", "Roles / trust boundaries"),
+                           ("assumptions", "Economic assumptions"), ("questions", "Adversarial questions")]:
+            vals = proto.get(key) or []
+            if vals:
+                L.append(f"**{label}:**")
+                L += [f"- {v}" for v in vals[:15]]
     if not_rec:
         L += ["---", "## Not reported (unproven candidates / falsified)",
               "_Listed for transparency; not shipped as findings._"]

@@ -28,16 +28,25 @@ def _severity(f: Finding) -> Severity:
 
 class Pipeline:
     def __init__(self, store: EvidenceStore, scanners, verifiers,
-                 reviewer=None, researcher=None, llm_code=None):
+                 reviewer=None, researcher=None, llm_code=None, protocol=None):
         self.store = store
         self.scanners = scanners
         self.verifiers = verifiers
         self.reviewer = reviewer
         self.researcher = researcher
         self.llm_code = llm_code
+        self.protocol = protocol
+        self.protocol_model = None
 
     def run(self, run_id: str, target_dir: str, target_id: str):
         self.store.start_run(run_id, target_id)
+        hints = ""
+        if self.protocol is not None and self.llm_code:
+            self.protocol_model = self.protocol.analyze(self.llm_code)
+            leads = (self.protocol_model.get("questions", []) +
+                     self.protocol_model.get("invariants", []))
+            if leads:
+                hints = "Protocol-level leads to investigate:\n" + "\n".join(f"- {q}" for q in leads[:20])
         fmap: dict = {}
 
         def add(h: Hypothesis, ev: Evidence | None = None) -> Finding:
@@ -55,7 +64,7 @@ class Pipeline:
                 add(h, ev)
 
         if self.researcher is not None and self.llm_code:
-            for h in self.researcher.hypothesize(self.llm_code):
+            for h in self.researcher.hypothesize(self.llm_code, hints):
                 f = add(h)
                 f.evidence.append(Evidence(kind="llm", tool="model",
                                            summary=h.rationale or h.claimed_impact,

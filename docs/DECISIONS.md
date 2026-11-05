@@ -37,3 +37,7 @@ Confirmed: targets unrestricted except by the user's own authorization. Per-targ
 
 ## D11 — Inference model pinned: Qwen2.5-Coder-14B-Instruct @ Q4
 Fits T4 16GB. Config-driven; swapping is one edit to `config/model.yaml`.
+
+## D4 — UPDATE 2026-11-05: canonical home is EC2
+Per user: the lab lives entirely on the box (repo, git, code, models, runs) — fully
+self-contained "local lab on my EC2". Authored and run over SSH; Mac is only a terminal.

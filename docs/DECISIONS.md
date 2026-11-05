@@ -41,3 +41,8 @@ Fits T4 16GB. Config-driven; swapping is one edit to `config/model.yaml`.
 ## D4 — UPDATE 2026-11-05: canonical home is EC2
 Per user: the lab lives entirely on the box (repo, git, code, models, runs) — fully
 self-contained "local lab on my EC2". Authored and run over SSH; Mac is only a terminal.
+
+## D7 — UPDATE 2026-11-05: pushing enabled
+User provided a dedicated passwordless deploy key at ~/.ssh/id_ed25519 and a git
+remote, and asked the assistant to push after each commit. Repo core.sshCommand set
+to that key. Commits remain clean (no AI attribution).

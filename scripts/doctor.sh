@@ -25,7 +25,7 @@ if docker image inspect "$IMG" >/dev/null 2>&1; then
   for cmd in "forge --version" "anvil --version" "cast --version" "slither --version" \
              "semgrep --version" "halmos --version" \
              "echidna --version" "medusa --version" "aderyn --version" "solc --version"; do
-    out=$(docker run --rm "$IMG" bash -lc "$cmd" 2>&1 | head -1)
+    out=$(docker run --rm "$IMG" bash -c "$cmd" 2>&1 | head -1)
     if [ -n "$out" ] && ! echo "$out" | grep -qiE "not found|no such|error"; then ok "${cmd%% *}: $out"; else bad "${cmd%% *} ($out)"; fi
   done
 else bad "analysis image"; fi

@@ -26,3 +26,10 @@ Format: `date · phase · action · command/evidence · result · gate`
 - Training data: any public, license recorded, model not redistributed (D8 update).
 - Standard: production-grade, runbooks + guides mandatory (D9).
 - Gate: PASS.
+
+## 2026-11-05 · Phase 1 · toolchain resolved; two checker bugs fixed
+- Resolved versions: slither 0.11.6, semgrep 1.183.0, halmos 0.3.3, echidna 2.4.0,
+  medusa 1.5.1, mythril v0.24.8 (isolated image), solc 0.8.28, foundry forge 1.9.0.
+- Fixes: aderyn asset picker grabbed the -update installer (now excludes update/installer
+  and handles .tar.xz); doctor used a login shell that wiped foundry's PATH (now bash -c).
+- Pushing enabled (D7 update).

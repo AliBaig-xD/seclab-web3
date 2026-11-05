@@ -237,6 +237,7 @@ LOADERS = {
     "solidifi": lambda: load_solidifi(os.path.join(SCRATCH, "datasets", "solidifi")),
     "not_so_smart": lambda: load_not_so_smart(os.path.join(SCRATCH, "datasets", "not-so-smart")),
     "defihacklabs": lambda: load_defihacklabs(os.path.join(SCRATCH, "datasets", "defihacklabs")),
+}
 
 
 def load_slither_wild(path: str) -> list[Example]:

@@ -6,15 +6,28 @@ executable PoC.** Built to make a small model + small hardware punch far above t
 weight through engineering and a large curated dataset.
 
 ## Quick start (on the box)
+`seclab` = `python3 -m orchestrator.cli`. **Point it at a target; it discovers every
+contract itself.** Engine flags (not the target) set the depth and runtime.
 ```
-python3 -m orchestrator.cli scan <dir> --llm --swarm --rag --exploit      # full agentic run
-python3 -m orchestrator.cli onchain 0x<addr> --chain 1 --basis bounty:<p> # deployed contract
-python3 -m orchestrator.cli benchmark        # recall / FP / PoC-repro
-python3 -m orchestrator.cli kg <dir>         # knowledge graph of a target
-bash scripts/train.sh                        # train the specialized model
+# ONE target — paste anything: repo URL | explorer URL | address | local path
+seclab go https://github.com/org/protocol --basis bounty:<p> --llm --swarm --exploit
+seclab go https://etherscan.io/address/0x<addr>      # chain auto-detected from the URL
+seclab go 0x<addr> --chain 1 --fast                  # fast = static-only triage (seconds)
+
+# MANY targets — harvest a corpus, scan it, read the ranked leaderboard
+seclab targets --chain 1 --limit 500 --out corpus.txt            # gather, do not hand-pick
+seclab targets --chain 1 --solc-below 0.6.0 --out old.txt        # old-era (pre-2020) contracts
+seclab batch corpus.txt --basis bounty:<p> --fast                # triage, then go deep on hits
+seclab batch old.txt   --basis bounty:<p> --llm --swarm --exploit
+
+seclab benchmark   # recall / FP / PoC-repro      seclab kg <dir>   # knowledge graph
+bash scripts/train.sh   # train the specialized model
 ```
-Every run writes `results/runs/<id>/` with report.md, disclosure.md, findings.json,
-kg.db, evidence.db, run.log, run_manifest.json.
+Depth: `--fast` (static, seconds) · default (+symbolic+fuzz, minutes) ·
+`--llm --swarm --rag --exploit` (AI hunter + auto-PoC, minutes–hours). Full guide:
+**docs/runbooks/USAGE.md**. Every run writes `results/runs/<id>/` (report.md,
+disclosure.md, findings.json, kg.db, evidence.db, run_manifest.json); batches write
+`results/batches/<id>/leaderboard.{md,json}`.
 
 ## The invariant (docs/WORKFLOW.md)
 A Finding's tier is DERIVED from evidence, never asserted by the model:
@@ -29,7 +42,10 @@ A Finding's tier is DERIVED from evidence, never asserted by the model:
   LLM hunter (RAG-grounded), **swarm map-reduce engine** (graph slices -> per-slice hunts
   -> cross-slice consolidation), exploitation agent, independent reviewer, triage, report,
   responsible disclosure.
-- **On-chain ingestion** (Sourcify V2) with exact compiler settings; PoCs on Anvil forks.
+- **On-chain ingestion**: paste an address or a block-explorer URL (Sourcify V2 + Etherscan
+  v2 fallback, chain auto-detected) with exact compiler settings; PoCs on Anvil forks.
+- **Batch + harvest**: scan a whole corpus into a ranked leaderboard; harvest candidate
+  lists (by chain, solc era, or deploy date) so targets are gathered, not hand-picked.
 - **Training pipeline**: multi-source curated dataset (SmartBugs, SolidiFI, 644 real
   DeFiHackLabs PoCs, Web3Bugs, DeFiVulnLabs, not-so-smart, our corpus, self-labeling
   flywheel), completion-masked QLoRA SFT, eval/ckpt/resume, config-scalable, HF push.
@@ -37,5 +53,6 @@ A Finding's tier is DERIVED from evidence, never asserted by the model:
 
 ## Docs
 `docs/ARCHITECTURE.md` · `docs/WORKFLOW.md` (the law) · `docs/IMPLEMENTATION_PLAN.md` ·
-`docs/runbooks/` (scanning, training, operations, on-chain) · `RESUME.md` (current state) ·
+`docs/runbooks/USAGE.md` (end-user guide) · `docs/runbooks/` (scanning, training,
+operations, on-chain) · `RESUME.md` (current state) ·
 `SCOPE.md` · `agents/README.md`.

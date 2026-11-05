@@ -70,23 +70,40 @@ def _deploy_ts(chain, addr, key):
         return None
 
 
+def _semver(v):
+    import re as _re
+    m = _re.match(r"v?(\d+)\.(\d+)\.(\d+)", v or "")
+    return tuple(int(x) for x in m.groups()) if m else (99, 99, 99)
+
+
+def _metadata(chain, addr):
+    try:
+        return _get_json(f"https://sourcify.dev/server/v2/contract/{chain}/{addr}?fields=metadata").get("metadata")
+    except Exception:
+        return None
+
+
 def harvest_targets(chain=1, limit=100, sort="desc", before=None, after=None,
-                    out=None, log=print):
-    """Harvest verified-contract addresses (Sourcify bulk index). Optional deploy-date
-    window (before/after = 'YYYY-MM-DD') filters via Etherscan — needs ETHERSCAN_API_KEY.
+                    solc_below=None, out=None, log=print):
+    """Harvest verified-contract addresses (Sourcify bulk index).
+      - solc_below='0.6.0'  -> keep only contracts compiled below that solc (free, no key;
+        0.4.x/0.5.x ~ the pre-2020 era) AND dedup identical clones by source hash.
+      - before/after='YYYY-MM-DD' -> filter by on-chain DEPLOY date via Etherscan
+        (needs ETHERSCAN_API_KEY; exact but slower).
     Writes a targets file ready for `seclab batch`."""
     key = _os.environ.get("ETHERSCAN_API_KEY", "")
     date_filter = bool(before or after)
     if date_filter and not key:
-        log("[warn] date filter needs ETHERSCAN_API_KEY; harvesting without date filter")
+        log("[warn] date filter needs ETHERSCAN_API_KEY; harvesting without it")
         date_filter = False
+    want_meta = bool(solc_below)
+    thr = _semver(solc_below) if solc_below else None
     lo = _epoch(after) if after else None
     hi = _epoch(before) if before else None
-    picked, after_id, scanned = [], None, 0
-    # when filtering by deploy date we must scan well beyond `limit`
-    hard_cap = limit * 60 if date_filter else limit * 2
+    picked, seen, after_id, scanned = [], set(), None, 0
+    hard_cap = limit * (80 if (date_filter or want_meta) else 2)
     while len(picked) < limit and scanned < hard_cap:
-        page = min(200, (limit - len(picked)) * (20 if date_filter else 1) + 5)
+        page = min(200, (limit - len(picked)) * (20 if (date_filter or want_meta) else 1) + 5)
         url = f"https://sourcify.dev/server/v2/contracts/{chain}?limit={page}&sort={sort}"
         if after_id:
             url += f"&afterMatchId={after_id}"
@@ -98,9 +115,21 @@ def harvest_targets(chain=1, limit=100, sort="desc", before=None, after=None,
             addr = row.get("address")
             if not addr:
                 continue
+            if want_meta:
+                md = _metadata(chain, addr)
+                _time.sleep(0.05)
+                if not md:
+                    continue
+                if thr and _semver(md.get("compiler", {}).get("version", "")) >= thr:
+                    continue
+                srcs = md.get("sources", {}) or {}
+                dk = tuple(sorted((v.get("keccak256") or k) for k, v in srcs.items()))
+                if dk in seen:
+                    continue
+                seen.add(dk)
             if date_filter:
                 ts = _deploy_ts(chain, addr, key)
-                _time.sleep(0.22)  # free-tier rate limit
+                _time.sleep(0.22)
                 if ts is None or (lo and ts < lo) or (hi and ts >= hi):
                     continue
             picked.append(addr)
@@ -111,10 +140,13 @@ def harvest_targets(chain=1, limit=100, sort="desc", before=None, after=None,
             break
     if out:
         with open(out, "w") as f:
-            win = f" deploy<{before}" if before else ""
-            win += f" deploy>={after}" if after else ""
-            f.write(f"# {len(picked)} verified contracts chain={chain} sort={sort}{win}\n")
+            tags = []
+            if solc_below: tags.append(f"solc<{solc_below}")
+            if before: tags.append(f"deploy<{before}")
+            if after: tags.append(f"deploy>={after}")
+            f.write(f"# {len(picked)} verified contracts chain={chain} sort={sort}"
+                    + (" " + " ".join(tags) if tags else "") + "\n")
             for a in picked:
                 f.write(f"{a} {chain}\n")
-        log(f"harvested {len(picked)} targets (scanned {scanned}) -> {out}")
+        log(f"harvested {len(picked)} targets (scanned {scanned}, deduped {len(seen) - len(picked) if want_meta else 0}) -> {out}")
     return picked

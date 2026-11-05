@@ -87,7 +87,7 @@ def cmd_batch(a):
 
 def cmd_targets(a):
     harvest_targets(chain=a.chain, limit=a.limit, sort=a.sort, before=a.before,
-                    after=a.after, out=a.out)
+                    after=a.after, solc_below=a.solc_below, out=a.out)
     return 0
 
 
@@ -168,6 +168,7 @@ def main(argv=None):
     tg.add_argument("--sort", choices=["desc", "asc"], default="desc", help="by verification time")
     tg.add_argument("--before", help="only contracts DEPLOYED before this date YYYY-MM-DD (needs ETHERSCAN_API_KEY)")
     tg.add_argument("--after", help="only contracts DEPLOYED on/after YYYY-MM-DD")
+    tg.add_argument("--solc-below", help="only contracts compiled below this solc (e.g. 0.6.0 ~ pre-2020 era); free, no key; also dedups clones")
     tg.add_argument("--out", required=True, help="write targets file here (feed to `seclab batch`)")
     tg.set_defaults(fn=cmd_targets)
     o = sub.add_parser("onchain", help="scan a deployed verified contract")

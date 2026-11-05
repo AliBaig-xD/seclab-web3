@@ -39,3 +39,9 @@ def test_researcher_uses_kb_grounding(tmp_path):
     Researcher(C(), kb=kb).hypothesize("function withdraw() { msg.sender.call{value:b}(''); balances=0; }")
     assert "Relevant vulnerability knowledge" in captured["prompt"]
     assert "Reentrancy" in captured["prompt"]
+
+
+def test_make_client_factory():
+    from orchestrator.model_client import make_client, OllamaClient, VLLMClient
+    assert isinstance(make_client({"server": "ollama", "endpoint": "http://x", "model_ref": "m"}), OllamaClient)
+    assert isinstance(make_client({"server": "vllm", "endpoint": "http://x", "model_ref": "m"}), VLLMClient)

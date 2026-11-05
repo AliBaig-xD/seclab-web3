@@ -62,3 +62,11 @@ def test_llm_evidence_does_not_count_as_independent():
 def test_hypothesis_id_stable_and_sized():
     assert mkh().id == mkh().id
     assert len(mkh().id) == 12
+
+
+def test_echidna_falsification_with_repro_is_proven():
+    f = Finding(hypothesis=mkh(),
+                evidence=[Evidence(kind="echidna", tool="echidna", summary="falsified",
+                                   repro="echidna . --contract X")],
+                repro_cmd="echidna . --contract X")
+    assert f.recompute_tier() == Tier.PROVEN and f.reportable

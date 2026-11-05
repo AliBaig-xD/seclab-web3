@@ -72,7 +72,7 @@ class Pipeline:
                 if ev:
                     f.evidence.append(ev)
             for e in f.evidence:
-                if e.kind == "foundry_poc" and e.repro and not f.repro_cmd:
+                if e.kind in ("foundry_poc", "echidna", "medusa") and e.repro and not f.repro_cmd:
                     f.repro_cmd = e.repro
             f.severity = _severity(f)
             f.recompute_tier()

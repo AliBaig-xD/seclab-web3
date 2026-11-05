@@ -69,9 +69,10 @@ class Finding:
         if self.falsified:
             self.tier = Tier.CANDIDATE
             return self.tier
+        DYNAMIC_PROOF = {"foundry_poc", "echidna", "medusa"}
         kinds = {e.kind for e in self.evidence}
         independent = {e.tool for e in self.evidence if e.kind != "llm"}
-        if "foundry_poc" in kinds and self.repro_cmd:
+        if (kinds & DYNAMIC_PROOF) and self.repro_cmd:
             self.tier = Tier.PROVEN
         elif len(independent) >= 2:
             self.tier = Tier.CORROBORATED

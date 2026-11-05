@@ -36,20 +36,27 @@ evidence or an executable PoC**. Full scope in `SCOPE.md`; the law is `docs/WORK
     bash scripts/doctor.sh           # env/tool gate
 
 ## STATUS — as of 2026-11-05 (UPDATE THIS at each phase boundary)
-- Phase 0 governance, Phase 1 env: DONE (doctor ALL GREEN, versions frozen).
-- VALIDATION LAB COMPLETE (all grounded on real runs; 58 tests green):
-  static slither+aderyn+semgrep, symbolic mythril+halmos, fuzz echidna+medusa, foundry PoC.
-  Tiers: PROVEN = dynamic proof (PoC or echidna/medusa falsification) + repro; CORROBORATED
-  = >=2 independent tools; else CANDIDATE (not reported). Mythril is a custom offline image.
-- Senior layer: LLM researcher (14B), protocol intelligence, independent adversarial reviewer.
-- CLI: python3 -m orchestrator.cli scan <dir> [--llm] [--fast] [--poc-test T --poc-family F].
-- Auth gate per target (config/authorization.yaml); PoCs sandboxed to forks.
-- NEXT (in order): (A) Code Intelligence (Slither call graph / storage layout / roles /
-  reachability); (B) Phase 9 SWARM hypothesis engine = graph slicing -> per-slice agent
-  loops (tiered, T4 concurrency-capped) -> consolidation cross-slice re-hypothesis
-  (A-then-B interaction bugs via storage-slot overlap), same proof gate; (C) live-target
-  ingestion (Sourcify/Etherscan + anvil fork); (D) exploitation agent (LLM-generated PoC,
-  auto-iterated); (E) RAG/KG; (F) Phase 7 training (3-part, /opt/pytorch) + hf_push.
+Near-complete, production-grade EVM security lab. All on EC2, pushed to GitHub. ~82 tests green.
+
+BUILT + VERIFIED:
+- Env (doctor green), proof-gated pipeline, authorization gate.
+- Validation lab: slither/aderyn/semgrep + mythril/halmos + echidna/medusa + foundry PoC.
+- Senior layer: LLM researcher, protocol intelligence, independent reviewer.
+- Code intelligence (slither-API) + SWARM map-reduce engine (slices -> per-slice hunts ->
+  cross-slice consolidation). RAG knowledge base (--rag). Exploitation agent (--exploit).
+- On-chain ingestion (Sourcify V2, --onchain) — WETH + UniversalRouter end-to-end.
+- PRODUCTION training pipeline (training/): multi-source curated dataset (~1661+, leakage-safe,
+  licensed, data card), completion-masked SFT, eval/ckpt/resume, config-scalable, hf_push.
+- Lab benchmark harness (orchestrator/labeval) + clean negative control (0 FP).
+- Runbooks (docs/runbooks/) + docs/ARCHITECTURE.md.
+- CLI: python3 -m orchestrator.cli scan <dir|--onchain addr> [--llm --swarm --rag --exploit --fast]
+- Train: bash scripts/train.sh [--dry]   Harvest more data: bash scripts/run_harvest.sh
+
+IN FLIGHT / NEXT:
+- Background: smartbugs-wild slither self-labeling harvest (volume) + dry-run trainer validation.
+- After they finish: re-curate with harvested data; run FULL lab benchmark (expect recall 3/3);
+  launch a real QLoRA training run (T4-safe seq_len; frees GPU) to produce an actual adapter + eval.
+- Model is config-swappable: on bigger GPU, raise seq_len/batch and/or base model; no code change.
 
 ## Map
 `SCOPE.md` · `docs/WORKFLOW.md` (law) · `docs/IMPLEMENTATION_PLAN.md` (phases+gates) ·

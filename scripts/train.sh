@@ -29,4 +29,7 @@ else
   "$PY" training/finetune.py
   BASE=$(grep "^base_model" config/train.yaml | cut -d\" -f2)
   "$PY" training/evaluate.py --base "$BASE" --adapter model/adapters --sample 40
+  if [ "${2:-}" = "--push" ] && [ -n "${HF_TOKEN:-}" ]; then
+    scripts/hf_push.sh "${HF_REPO:-AliBaig-xD/seclab-web3-adapter}" model/adapters
+  fi
 fi

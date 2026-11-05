@@ -83,3 +83,24 @@ Format: `date · phase · action · command/evidence · result · gate`
   feedback, one-shot example. This is the known local-model limit stated at project start.
 - Wired as OPT-IN (--exploit). Real fix path: training capability-C (PoC generation) + model is
   config-swappable to a stronger local model; optional frontier-escalation hook stays off by default.
+
+## 2026-11-05 · Phase 5-9 · senior layer + swarm + onchain + RAG + production training + eval
+- Validation lab COMPLETE: slither/aderyn/semgrep (static), mythril/halmos (symbolic),
+  echidna/medusa (fuzz), foundry PoC. All grounded on real runs.
+- Senior layer: protocol intelligence, independent reviewer (never overrides a PoC).
+- Code intelligence (slither-API call graph/state/roles) + SWARM map-reduce engine
+  (graph slices -> tiered per-slice hunts -> cross-slice consolidation via shared-state
+  interaction pairs). Live run on reentrancy fixture: 2 slices, deepened, PROVEN.
+- On-chain ingestion (Sourcify V2 + optimizer/viaIR settings): WETH + UniversalRouter
+  (26 contracts, 48 slices) compiled + code-intel'd end-to-end. CLI --onchain + ephemeral auth.
+- Exploitation agent (LLM Foundry PoC + iterate); 14B ceiling noted, opt-in --exploit.
+- RAG knowledge base (pluggable embedder, sqlite vector store, vuln-class cards) wired into
+  researcher + swarm (--rag).
+- PRODUCTION training pipeline: multi-source curated dataset (SmartBugs/SolidiFI/DeFiHackLabs
+  PoCs/Web3Bugs/not-so-smart/DeFiVulnLabs/corpus/slither-wild flywheel; ~1661+ examples,
+  provenance+license, leakage-safe split by contract, data card). Completion-masked SFT,
+  dynamic padding, warmup+cosine, eval/ckpt/resume, config-scalable. Real eval metrics
+  (perplexity + detection accuracy + PoC structural). GPU-managed train.sh. hf_push ready.
+- Lab benchmark harness (recall/FP/PoC-repro) + clean negative control (0 FP verified static).
+- Runbooks + architecture doc. ~82 unit tests green.
+- Background: smartbugs-wild self-labeling harvest + dry-run trainer validation running.

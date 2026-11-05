@@ -11,3 +11,9 @@ targets:
     poc_allowed: true
     affirmed_by: dev@archrco.com
     affirmed_date: "2026-11-05"
+  - id: fuzz-invariant
+    source: eval/corpus/fuzz-invariant
+    basis: own
+    poc_allowed: true
+    affirmed_by: dev@archrco.com
+    affirmed_date: "2026-11-05"

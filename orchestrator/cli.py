@@ -35,6 +35,8 @@ def main(argv=None):
     ap.add_argument("--swarm-concurrency", type=int, default=1)
     ap.add_argument("--exploit", action="store_true", help="LLM-generate+run Foundry PoCs to prove candidates")
     ap.add_argument("--rag", action="store_true", help="ground the hunter in the vuln knowledge base")
+    ap.add_argument("--kg", action="store_true", help="build + save a knowledge graph of the target")
+    ap.add_argument("--differential", action="store_true", help="run differential testing across solc versions")
     a = ap.parse_args(argv)
 
     os.chdir(ROOT)
@@ -66,6 +68,9 @@ def main(argv=None):
     os.makedirs("results", exist_ok=True)
     store = EvidenceStore("results/evidence.db")
     scanners = [SlitherScanner(), AderynScanner(), SemgrepScanner()]
+    if a.differential:
+        from .tools.differential import DifferentialScanner
+        scanners.append(DifferentialScanner())
     if not a.fast:
         scanners.append(MythrilScanner())
         scanners.append(HalmosScanner())
@@ -142,6 +147,18 @@ def main(argv=None):
     out = a.report or f"results/report-{run_id}.md"
     with open(out, "w") as fh:
         fh.write(md)
+    # responsible-disclosure package (confirmed findings only)
+    from .disclosure import build_disclosure, render_markdown
+    dpkg = build_disclosure(findings, tid)
+    with open(f"results/disclosure-{run_id}.md", "w") as fh:
+        fh.write(render_markdown(dpkg))
+    if a.kg:
+        from .codeintel import extract as _ci
+        from .kg import KnowledgeGraph
+        g = KnowledgeGraph.from_model(_ci(target))
+        g.attach_findings(findings)
+        g.save(f"results/kg-{run_id}.db")
+        print(f"[kg] {g.stats()} + unguarded_writers={len(g.unguarded_state_writers())}")
     rep = sum(1 for f in findings if f.reportable)
     proven = sum(1 for f in findings if f.tier.value == "PROVEN")
     print(f"[done] findings={len(findings)} reportable={rep} proven={proven}")

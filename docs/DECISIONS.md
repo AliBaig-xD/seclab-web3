@@ -25,3 +25,15 @@ User pushes manually. **No AI attribution in commit messages** — this is the u
 
 ## D8 — Training-data license policy: permissive-only by default
 Apache/MIT/CC0 so any resulting model/adapter is safe to keep/share. Confirm via user answer; broaden only on explicit opt-in.
+
+## D8 — UPDATE 2026-11-05
+Training-data policy broadened per user: **any publicly available source** is allowed. The dataset loader records each source's license; the resulting model/adapter is **not redistributed** unless licenses later confirmed permissive. Default inference model stays Apache-2.0.
+
+## D9 — Production-grade bar (no compromise)
+User directive: no slacking, nothing half-built, no "v1" shortcuts — especially the orchestrator/harness. Every phase ships: real error handling, structured logging, idempotent + pinned provisioning, automated tests for its core logic, and a **runbook** in `docs/runbooks/` + a usage guide where a human operates it. "Works on a happy path" is not done.
+
+## D10 — Authorization model
+Confirmed: targets unrestricted except by the user's own authorization. Per-target `config/authorization.yaml` record (basis: own|bounty|engagement) is mandatory and checked by the scope gate (Phase 6, but the schema + gate stub land early). PoCs sandboxed to forks always.
+
+## D11 — Inference model pinned: Qwen2.5-Coder-14B-Instruct @ Q4
+Fits T4 16GB. Config-driven; swapping is one edit to `config/model.yaml`.

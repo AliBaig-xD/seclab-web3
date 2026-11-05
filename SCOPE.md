@@ -33,11 +33,13 @@ tools and the proof-gating are the product.
 - Live mainnet transactions with real assets. PoCs run only on isolated forks.
 - Producing exploit tooling for unauthorized use.
 
-## Authorization (CONFIRM — currently an assumption)
-ASSUMPTION until the user confirms: targets are limited to (a) the user's own
-contracts, (b) public bug-bounty programs whose scope explicitly permits this, and
-(c) engagements with written authorization. A machine-checkable scope gate is built
-in Phase 6; no target is analyzed without an authorization record.
+## Authorization (CONFIRMED 2026-11-05)
+The lab may be pointed at any EVM target, but only within what the user is
+authorized to test. Enforcement: a machine-checkable **authorization record** is
+required per target before any run (`config/authorization.yaml`), asserting the
+basis — `own` / `bounty:<program>` / `engagement:<id>` — and the user affirms it.
+Static/read-only analysis is permitted broadly; **PoC execution is always sandboxed
+to a local fork and never broadcast**. No target is processed without an auth record.
 
 ## Success criteria (v-complete)
 - Ingest a mid-size EVM repo and produce a structured report where **every reported

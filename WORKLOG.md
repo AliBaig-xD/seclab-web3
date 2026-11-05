@@ -19,3 +19,10 @@ Format: `date · phase · action · command/evidence · result · gate`
 ## 2026-11-05 · Phase 0 · Governance scaffold authored
 - Wrote: README, SCOPE, WORKFLOW (anti-hallucination), IMPLEMENTATION_PLAN, DECISIONS, ECC-REVIEW, repo skeleton, .gitignore. `git init` done.
 - Gate: pending initial commit.
+
+## 2026-11-05 · Phase 0 · Decisions locked from user answers
+- Auth scope: any target within user authorization → per-target auth record + scope gate; PoCs sandboxed. (SCOPE updated, D10.)
+- Inference model: Qwen2.5-Coder-14B-Instruct Q4 (D11).
+- Training data: any public, license recorded, model not redistributed (D8 update).
+- Standard: production-grade, runbooks + guides mandatory (D9).
+- Gate: PASS.

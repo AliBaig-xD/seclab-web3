@@ -237,8 +237,32 @@ LOADERS = {
     "solidifi": lambda: load_solidifi(os.path.join(SCRATCH, "datasets", "solidifi")),
     "not_so_smart": lambda: load_not_so_smart(os.path.join(SCRATCH, "datasets", "not-so-smart")),
     "defihacklabs": lambda: load_defihacklabs(os.path.join(SCRATCH, "datasets", "defihacklabs")),
-    "web3bugs": lambda: load_web3bugs(os.path.join(SCRATCH, "datasets", "web3bugs")),
-}
+
+
+def load_slither_wild(path: str) -> list[Example]:
+    out = []
+    if not os.path.exists(path):
+        return out
+    for line in open(path):
+        try:
+            r = json.loads(line)
+        except Exception:
+            continue
+        src = _norm(r.get("src", ""))
+        classes = r.get("classes", [])
+        if not src or not classes:
+            continue
+        cls = classes[0]
+        out.append(Example("A", cls,
+                           "Analyze this Solidity contract for security vulnerabilities. List the "
+                           "vulnerability classes you find.",
+                           src, "Vulnerabilities: " + ", ".join(classes) + ".",
+                           "slither-wild (self-labeled)", "mixed-public", _sha(src)))
+    return out
+
+
+LOADERS["web3bugs"] = lambda: load_web3bugs(os.path.join(SCRATCH, "datasets", "web3bugs"))
+LOADERS["slither_wild"] = lambda: load_slither_wild(os.path.join(ROOT, "training", "data", "slither_wild.jsonl"))
 
 
 # ---------------- curation ----------------

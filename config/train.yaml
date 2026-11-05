@@ -12,7 +12,7 @@ lora:
 train:
   seq_len: 1024
   lr: 2.0e-4
-  epochs: 2
+  epochs: 1
   batch_size: 1
   grad_accum: 16
   warmup_ratio: 0.03
@@ -20,8 +20,8 @@ train:
   lr_scheduler: "cosine"
   max_grad_norm: 0.3
   logging_steps: 5
-  eval_steps: 25
-  save_steps: 50
+  eval_steps: 100
+  save_steps: 100
   save_total_limit: 3
   seed: 0
   optim: "paged_adamw_8bit"

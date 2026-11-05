@@ -31,7 +31,7 @@ if docker image inspect "$IMG" >/dev/null 2>&1; then
 else bad "analysis image"; fi
 
 # isolated mythril image
-mv=$(docker run --rm mythril/myth version 2>&1 | head -1)
+mv=$(docker run --rm seclab-web3/mythril:latest version 2>&1 | head -1)
 if [ -n "$mv" ] && ! echo "$mv" | grep -qiE "no such|not found|error|unable"; then ok "mythril: $mv"; else bad "mythril image ($mv)"; fi
 
 echo "---" | tee -a "$OUT"

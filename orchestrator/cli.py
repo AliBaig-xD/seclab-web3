@@ -7,6 +7,7 @@ from .pipeline import Pipeline
 from .tools.slither import SlitherScanner
 from .tools.aderyn import AderynScanner
 from .tools.semgrep import SemgrepScanner
+from .tools.mythril import MythrilScanner
 from .tools.foundry import FoundryPoCVerifier
 from .report import render_markdown
 
@@ -23,6 +24,7 @@ def main(argv=None):
     ap.add_argument("--run-id")
     ap.add_argument("--report")
     ap.add_argument("--llm", action="store_true", help="enable live LLM researcher")
+    ap.add_argument("--fast", action="store_true", help="skip slow symbolic/fuzz engines")
     a = ap.parse_args(argv)
 
     os.chdir(ROOT)
@@ -36,6 +38,8 @@ def main(argv=None):
     os.makedirs("results", exist_ok=True)
     store = EvidenceStore("results/evidence.db")
     scanners = [SlitherScanner(), AderynScanner(), SemgrepScanner()]
+    if not a.fast:
+        scanners.append(MythrilScanner())
     verifiers = []
     if a.poc_test:
         verifiers.append(FoundryPoCVerifier(a.poc_test, a.poc_family))

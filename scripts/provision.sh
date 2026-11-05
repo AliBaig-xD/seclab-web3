@@ -22,7 +22,7 @@ stage_model(){
   docker exec seclab-ollama ollama list
 }
 stage_analysis(){ log "building analysis image..."; docker build -f docker/analysis.Dockerfile -t seclab-web3/analysis:latest .; }
-stage_symbolic(){ log "pulling isolated mythril image..."; docker pull mythril/myth:latest; }
+stage_symbolic(){ log "building custom mythril image..."; docker build -f docker/mythril.Dockerfile -t seclab-web3/mythril:latest .; }
 
 case "${1:-all}" in
   check) stage_check;;

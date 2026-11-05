@@ -58,3 +58,10 @@ Format: `date · phase · action · command/evidence · result · gate`
 - NEXT: live-target ingestion (Sourcify/Etherscan source + anvil fork); broaden scanners
   (semgrep/aderyn), symbolic (halmos/mythril), fuzz (echidna/medusa); live LLM researcher;
   exploitation agent (LLM-generated PoC); then Phase 7 training pipeline.
+
+## 2026-11-05 · Phase 4 · static trio + mythril symbolic complete
+- Static: Slither + Aderyn + own-licensed Semgrep ruleset (all firing).
+- Symbolic: custom seclab-web3/mythril image (upgraded py-solc-x + cached solc, offline);
+  MythrilScanner maps SWC->family so results CORROBORATE static (reentrancy SWC-107).
+- --fast flag skips slow engines. provision/doctor build+check the custom mythril image.
+- TODO (tracked): mythril multi-file via crytic-compile (single-file now).

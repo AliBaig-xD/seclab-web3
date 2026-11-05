@@ -74,6 +74,13 @@ def cmd_train(a):
     os.execvp("bash", args)
 
 
+def cmd_dashboard(a):
+    from .dashboard import generate
+    out, n = generate()
+    print(f"dashboard: {out} ({n} runs)")
+    return 0
+
+
 def cmd_harvest(a):
     os.execvp("bash", ["bash", os.path.join(ROOT, "scripts", "run_harvest.sh")])
 
@@ -101,6 +108,7 @@ def main(argv=None):
     t = sub.add_parser("train", help="train the specialized model")
     t.add_argument("--dry", action="store_true")
     t.set_defaults(fn=cmd_train)
+    sub.add_parser("dashboard", help="generate the static HTML run dashboard").set_defaults(fn=cmd_dashboard)
     sub.add_parser("harvest", help="self-label raw contracts to grow the dataset").set_defaults(fn=cmd_harvest)
     a = ap.parse_args(argv)
     return a.fn(a)

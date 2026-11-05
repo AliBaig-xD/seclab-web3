@@ -1,0 +1,37 @@
+{
+  "generated": "2026-11-05T03:03:31",
+  "total": 144,
+  "splits": {
+    "train": 91,
+    "val": 25,
+    "test": 28
+  },
+  "by_capability": {
+    "A": 143,
+    "C": 1
+  },
+  "by_class": {
+    "unchecked_low_level_calls": 51,
+    "reentrancy": 32,
+    "access_control": 18,
+    "arithmetic": 16,
+    "bad_randomness": 7,
+    "denial_of_service": 6,
+    "time_manipulation": 5,
+    "front_running": 4,
+    "other": 3,
+    "invariant": 1,
+    "short_addresses": 1
+  },
+  "sources_loaded": {
+    "corpus": 4,
+    "smartbugs": 140
+  },
+  "licenses": [
+    "Apache-2.0",
+    "proprietary-internal"
+  ],
+  "unique_contracts": 143,
+  "dataset_hash": "07d178f8aee5ca705300c0dd72966fbf9e2c7f6c1af92416cb8c0caa5d7fef72",
+  "leakage_control": "split assigned per contract_sha; no contract spans splits"
+}

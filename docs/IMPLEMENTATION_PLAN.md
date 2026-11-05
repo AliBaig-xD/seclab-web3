@@ -60,3 +60,23 @@ Work proceeds phase by phase without pausing for approval. Long box tasks run un
 - Exploitation agent (LLM-generated Foundry PoC, auto-iterated): Phase 4b (planned).
 - Training (3-part, config-driven QLoRA on /opt/pytorch) + HF push: Phase 7 (planned; hf_push built).
 - Evaluation harness + negative controls + regression CI: Phase 8 (planned).
+
+## Phase 9 — Swarm hypothesis engine (protocol map-reduce)  [first-class; no compromise]
+Makes the local model scale past its context window by partitioning on the call/trust
+graph and consolidating. Depends on Code Intelligence (Phase 3b).
+1. **Graph slicing (not file-based).** Each slice = a function + its callees + the state
+   it reads/writes + the roles that can reach it. Driven by Slither call graph, storage
+   layout, inheritance. Every slice carries a shared protocol-context header (roles, key
+   invariants, token/accounting model) so no agent reasons blind.
+2. **Per-slice agent loops** (hypothesize -> attempt PoC -> observe -> revise). Tiered:
+   cheap broad pass first; reserve deep loops for slices the cheap pass flags. T4 time-
+   slices one GPU, so concurrency is capped and each slice gets a depth budget.
+3. **Consolidation = cross-slice re-hypothesis**, not a finding dump. Reduce step reasons
+   over the interaction graph: pairs/sequences of per-slice findings + spanning invariants
+   (A-correct, B-correct, A-then-B breaks solvency). Deterministic seed: slices whose
+   written storage slots overlap another slice's read slots are candidate interaction pairs.
+3. **Same proof gate throughout.** Swarm raises recall AND noise, so tool-verification +
+   PoC + adversarial review matter more. Final ranking: prioritize findings that are
+   CONFIRMED and chain with another CONFIRMED finding.
+Build order: Code Intelligence (call graph/storage/roles/reachability) -> slicer ->
+map-reduce hunt loop (tiered, concurrency-capped) -> consolidation re-hypothesis.

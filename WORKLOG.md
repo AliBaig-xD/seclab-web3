@@ -65,3 +65,11 @@ Format: `date · phase · action · command/evidence · result · gate`
   MythrilScanner maps SWC->family so results CORROBORATE static (reentrancy SWC-107).
 - --fast flag skips slow engines. provision/doctor build+check the custom mythril image.
 - TODO (tracked): mythril multi-file via crytic-compile (single-file now).
+
+## 2026-11-05 · Phase 4/5 · full validation lab + senior layer
+- Validation lab COMPLETE: slither+aderyn+semgrep (static), mythril+halmos (symbolic),
+  echidna+medusa (fuzz), foundry PoC (dynamic). All grounded on real runs; 58 tests green.
+- Senior layer: protocol intelligence (invariants/roles/assumptions/adversarial questions)
+  + independent adversarial reviewer (kills FPs, never overrides a dynamic proof).
+- NEW first-class plan item: Phase 9 swarm hypothesis engine (protocol map-reduce) to
+  scale the local model past its context window; consolidation finds A-then-B interaction bugs.

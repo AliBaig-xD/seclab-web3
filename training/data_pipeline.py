@@ -231,6 +231,32 @@ def load_web3bugs(base: str) -> list[Example]:
     return out
 
 
+def load_defivulnlabs(base: str) -> list[Example]:
+    out = []
+    import re as _re
+    NAME = {"reentrancy":"reentrancy","txorigin":"access_control","overflow":"arithmetic",
+            "underflow":"arithmetic","delegatecall":"delegatecall","selfdestruct":"unprotected-selfdestruct",
+            "randomness":"bad_randomness","signature":"signature-replay","approval":"access_control"}
+    for f in glob.glob(os.path.join(base, "src", "test", "*.sol")):
+        try:
+            src = open(f, errors="ignore").read()
+        except Exception:
+            continue
+        if len(src) < 150 or len(src) > 20000:
+            continue
+        stem = os.path.basename(f).replace(".sol", "").lower()
+        cls = next((v for k, v in NAME.items() if k in stem), stem)
+        cmts = " ".join(_re.findall(r"//\s*(.+)", src)[:12])
+        cmts = _re.sub(r"\s+", " ", cmts)[:500]
+        out.append(Example("A", cls,
+                           "Analyze this Solidity code. Identify the vulnerability pattern it demonstrates "
+                           "and explain the root cause and exploitation.",
+                           _norm(src),
+                           f"Vulnerability pattern: {cls}. {cmts}" if cmts else f"Vulnerability pattern: {cls}.",
+                           "DeFiVulnLabs", "unknown-public", _sha(src)))
+    return out
+
+
 LOADERS = {
     "corpus": lambda: load_corpus(),
     "smartbugs": lambda: load_smartbugs(os.path.join(SCRATCH, "datasets", "smartbugs-curated")),
@@ -264,6 +290,7 @@ def load_slither_wild(path: str) -> list[Example]:
 
 LOADERS["web3bugs"] = lambda: load_web3bugs(os.path.join(SCRATCH, "datasets", "web3bugs"))
 LOADERS["slither_wild"] = lambda: load_slither_wild(os.path.join(ROOT, "training", "data", "slither_wild.jsonl"))
+LOADERS["defivulnlabs"] = lambda: load_defivulnlabs(os.path.join(SCRATCH, "datasets", "defivulnlabs"))
 
 
 # ---------------- curation ----------------
@@ -324,7 +351,7 @@ def write(examples: list[Example], out_dir: str, per_source: dict):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs"])
+    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild"])
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "training", "data"))
     a = ap.parse_args()
     examples, per_source = curate(a.sources)

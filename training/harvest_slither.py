@@ -18,7 +18,7 @@ FAMILY = {"reentrancy-eth": "reentrancy", "reentrancy-no-eth": "reentrancy",
 def slither_label(path: str, timeout: int = 40):
     d = os.path.dirname(os.path.abspath(path))
     fn = os.path.basename(path)
-    cmd = ["docker", "run", "--rm", "--network", "none", "-e", "HOME=/cache",
+    cmd = ["docker", "run", "--rm", "-e", "HOME=/cache",
            "-v", f"{SCRATCH}/toolcache:/cache", "-v", f"{d}:/work", "-w", "/work", IMG,
            "bash", "-c", f"slither {fn} --json - 2>/dev/null"]
     try:

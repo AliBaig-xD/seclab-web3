@@ -8,7 +8,8 @@
 from __future__ import annotations
 import argparse, json, os, sys
 from .harness import ResearchHarness, ScanOptions
-from .targets import resolve_target
+from .targets import resolve_target, harvest_targets
+from .batch import run_batch
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -68,6 +69,26 @@ def cmd_go(a):
         print("       Use its GitHub repo (seclab repo <url>) or a deployed address / explorer URL.")
         return 2
     return 2 if "error" in r else 0
+
+
+def cmd_batch(a):
+    flags = []
+    for name in ("llm", "swarm", "rag", "exploit", "differential", "fast", "thorough"):
+        if getattr(a, name):
+            flags.append("--" + name)
+    flags += ["--poc-family", a.poc_family, "--swarm-concurrency", str(a.swarm_concurrency),
+              "--parallel", str(a.parallel)]
+    if a.verbose:
+        flags.append("--verbose")
+    run_batch(a.file, basis=a.basis, flags=flags, jobs=a.jobs, timeout=a.timeout,
+              batch_id=a.batch_id, resume=not a.no_resume)
+    return 0
+
+
+def cmd_targets(a):
+    harvest_targets(chain=a.chain, limit=a.limit, sort=a.sort, before=a.before,
+                    after=a.after, out=a.out)
+    return 0
 
 
 def cmd_repo(a):
@@ -132,6 +153,23 @@ def main(argv=None):
     g.add_argument("--basis", default="own")
     _add_engine_flags(g)
     g.set_defaults(fn=cmd_go)
+    bt = sub.add_parser("batch", help="scan a list of targets and rank them (leaderboard)")
+    bt.add_argument("file", help="targets file: one per line (address | explorer URL | repo | path), '#'=comment, optional ' <chain>'")
+    bt.add_argument("--basis", default="own")
+    bt.add_argument("--jobs", type=int, default=1, help="targets scanned concurrently (GPU-bound; keep low for --llm)")
+    bt.add_argument("--timeout", type=int, default=3600, help="per-target wall timeout (s)")
+    bt.add_argument("--batch-id")
+    bt.add_argument("--no-resume", action="store_true", help="re-run targets even if a prior run exists")
+    _add_engine_flags(bt)
+    bt.set_defaults(fn=cmd_batch)
+    tg = sub.add_parser("targets", help="harvest a candidate contract list (no hand-picking)")
+    tg.add_argument("--chain", type=int, default=1)
+    tg.add_argument("--limit", type=int, default=100)
+    tg.add_argument("--sort", choices=["desc", "asc"], default="desc", help="by verification time")
+    tg.add_argument("--before", help="only contracts DEPLOYED before this date YYYY-MM-DD (needs ETHERSCAN_API_KEY)")
+    tg.add_argument("--after", help="only contracts DEPLOYED on/after YYYY-MM-DD")
+    tg.add_argument("--out", required=True, help="write targets file here (feed to `seclab batch`)")
+    tg.set_defaults(fn=cmd_targets)
     o = sub.add_parser("onchain", help="scan a deployed verified contract")
     o.add_argument("address")
     o.add_argument("--chain", type=int, default=0)

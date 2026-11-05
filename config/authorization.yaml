@@ -17,3 +17,9 @@ targets:
     poc_allowed: true
     affirmed_by: dev@archrco.com
     affirmed_date: "2026-11-05"
+  - id: clean-guarded
+    source: eval/corpus/clean-guarded
+    basis: own
+    poc_allowed: true
+    affirmed_by: dev@archrco.com
+    affirmed_date: "2026-11-05"

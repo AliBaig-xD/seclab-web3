@@ -1,0 +1,42 @@
+{
+  "generated": "2026-11-05T03:17:49",
+  "engines": "static",
+  "recall": 0.333,
+  "false_positives_on_clean": 0,
+  "proven_findings": 0,
+  "rows": [
+    {
+      "target": "reentrancy-etherstore",
+      "expect": [
+        "reentrancy"
+      ],
+      "found": true,
+      "reportable": 1,
+      "proven": 0
+    },
+    {
+      "target": "symbolic-overflow",
+      "expect": [
+        "assertion-violation"
+      ],
+      "found": false,
+      "reportable": 0,
+      "proven": 0
+    },
+    {
+      "target": "fuzz-invariant",
+      "expect": [
+        "invariant-violation"
+      ],
+      "found": false,
+      "reportable": 0,
+      "proven": 0
+    },
+    {
+      "target": "clean-guarded",
+      "negative": true,
+      "reportable": 0,
+      "ok": true
+    }
+  ]
+}

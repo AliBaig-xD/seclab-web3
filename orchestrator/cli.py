@@ -8,6 +8,7 @@ from .tools.slither import SlitherScanner
 from .tools.aderyn import AderynScanner
 from .tools.semgrep import SemgrepScanner
 from .tools.mythril import MythrilScanner
+from .tools.halmos import HalmosScanner
 from .tools.foundry import FoundryPoCVerifier
 from .report import render_markdown
 
@@ -40,6 +41,7 @@ def main(argv=None):
     scanners = [SlitherScanner(), AderynScanner(), SemgrepScanner()]
     if not a.fast:
         scanners.append(MythrilScanner())
+        scanners.append(HalmosScanner())
     verifiers = []
     if a.poc_test:
         verifiers.append(FoundryPoCVerifier(a.poc_test, a.poc_family))

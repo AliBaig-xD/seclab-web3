@@ -55,3 +55,30 @@ def test_pipeline_dedups_static_and_llm_by_basename(tmp_path):
     s = EvidenceStore(str(tmp_path / "e.db"))
     fs = Pipeline(s, [TwoSourceScanner()], []).run("r1", str(tmp_path), "tgt")
     assert len(fs) == 1  # src/V.sol and V.sol merge
+
+
+def test_loc_key_normalizes_file_and_symbol_locators():
+    from orchestrator.pipeline import loc_key
+    assert loc_key("src/EtherStore.sol:8") == "etherstore"
+    assert loc_key("EtherStore.withdraw") == "etherstore"
+    assert loc_key("EtherStore.sol:withdraw") == "etherstore"
+
+
+class SymbolScanner:
+    kind = "slither"
+    def scan(self, target):
+        from orchestrator.schema import Hypothesis, Evidence
+        a = Hypothesis(vuln_type="reentrancy", location="src/V.sol:8", precondition="p",
+                       claimed_impact="drain", source="static")
+        b = Hypothesis(vuln_type="Reentrancy", location="V.withdraw", precondition="p",
+                       claimed_impact="drain", source="llm")
+        return [(a, Evidence(kind="slither", tool="slither", summary="s", severity_hint="HIGH")),
+                (b, Evidence(kind="llm", tool="swarm", summary="l"))]
+
+
+def test_pipeline_merges_file_and_symbol_locations(tmp_path):
+    from orchestrator.evidence import EvidenceStore
+    from orchestrator.pipeline import Pipeline
+    s = EvidenceStore(str(tmp_path / "e.db"))
+    fs = Pipeline(s, [SymbolScanner()], []).run("r1", str(tmp_path), "tgt")
+    assert len(fs) == 1

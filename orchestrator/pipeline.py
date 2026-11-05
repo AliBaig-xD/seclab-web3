@@ -8,6 +8,14 @@ from .evidence import EvidenceStore
 from .triage import SEV_W
 
 
+def loc_key(location: str) -> str:
+    """Normalize a location to its contract/file stem so file-based locators
+    (src/Vault.sol:42) and symbol-based ones (Vault.withdraw) correlate."""
+    head = (location or "").split(":")[0]
+    base = os.path.basename(head)
+    return (base.split(".")[0] or base).lower()
+
+
 def family(vt: str) -> str:
     v = (vt or "").lower()
     return "reentrancy" if "reentran" in v else v
@@ -52,7 +60,7 @@ class Pipeline:
         fmap: dict = {}
 
         def add(h: Hypothesis, ev: Evidence | None = None) -> Finding:
-            key = (family(h.vuln_type), os.path.basename(h.location.split(":")[0]))
+            key = (family(h.vuln_type), loc_key(h.location))
             f = fmap.get(key)
             if f is None:
                 f = Finding(hypothesis=h)

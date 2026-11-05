@@ -4,7 +4,7 @@ from __future__ import annotations
 import json, os, subprocess
 from .tools.base import IMAGE, SCRATCH
 
-TOOLS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools")
+SCRIPTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "analysis", "scripts")
 PRIV_HINTS = ("only", "auth", "admin", "owner", "governance", "restricted")
 
 
@@ -12,8 +12,8 @@ def extract(target_dir: str, timeout: int = 600) -> dict:
     cache = f"{SCRATCH}/toolcache"
     os.makedirs(cache, exist_ok=True)
     cmd = ["docker", "run", "--rm", "-e", "HOME=/cache", "-v", f"{cache}:/cache",
-           "-v", f"{TOOLS_DIR}:/tools:ro", "-v", f"{target_dir}:/work", "-w", "/work",
-           IMAGE, "bash", "-c", "python3 /tools/codeintel_extract.py 2>/dev/null"]
+           "-v", f"{SCRIPTS_DIR}:/scripts:ro", "-v", f"{target_dir}:/work", "-w", "/work",
+           IMAGE, "bash", "-c", "python3 -I /scripts/codeintel_extract.py 2>/dev/null"]
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         return json.loads(p.stdout)

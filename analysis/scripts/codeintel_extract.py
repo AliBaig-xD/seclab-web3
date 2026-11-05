@@ -1,6 +1,9 @@
 """Runs INSIDE the analysis container. Extracts code intelligence via the Slither API:
 per-function visibility, modifiers, state reads/writes, internal/external calls."""
-import json, sys
+import json, os, sys
+
+# never let a sibling file shadow the real slither package
+sys.path = [p for p in sys.path if os.path.abspath(p or ".") != os.path.dirname(os.path.abspath(__file__))]
 from slither import Slither
 
 

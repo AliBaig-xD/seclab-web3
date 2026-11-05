@@ -41,3 +41,10 @@ Format: `date · phase · action · command/evidence · result · gate`
 - Froze versions in config/versions.env; captured docker/requirements.lock.txt; pinned model digest.
 - Follow-up (Phase 1 hardening, tracked): rebuild Dockerfile from pinned tags + lock for byte-repro.
 - Gate: PASS. Phase 1 DONE.
+
+## 2026-11-05 · Phase 3/4 · dynamic engine PROVEN on real tooling
+- Built self-contained reentrancy fixture (eval/corpus/reentrancy-etherstore, no forge-std dep).
+- forge test in sandbox container: [PASS] test_exploit_drains_store — EtherStore drained to 0.
+- Container pattern locked: root-in-container (the sandbox) + HOME=/cache on scratch for
+  solc/svm caches; tools live under /root so --user is not used.
+- Fixed git author identity to AliBaig-xD GitHub noreply (was dev@archrco.com).

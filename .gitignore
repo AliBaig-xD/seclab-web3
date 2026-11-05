@@ -14,3 +14,7 @@ node_modules/
 # run scratch
 *.log
 results/doctor-*.txt
+eval/corpus/**/out/
+eval/corpus/**/cache/
+eval/corpus/**/broadcast/
+eval/corpus/**/lib/

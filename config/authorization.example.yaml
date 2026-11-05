@@ -1,0 +1,10 @@
+# Copy to config/authorization.yaml per engagement. Scope gate (D10) refuses any
+# target without a matching, user-affirmed record. Static analysis broad; PoCs
+# always sandboxed to a local fork, never broadcast.
+targets:
+  - id: "example-repo"
+    source: "https://github.com/org/repo"
+    basis: "own"             # own | bounty:<program> | engagement:<id>
+    poc_allowed: true        # sandboxed fork only, regardless
+    affirmed_by: "dev@archrco.com"
+    affirmed_date: "2026-11-05"

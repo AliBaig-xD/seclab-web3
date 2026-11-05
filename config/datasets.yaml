@@ -1,0 +1,17 @@
+# Phase 7 dataset manifest. Policy (D8-update): ANY PUBLIC source allowed; license
+# is RECORDED per source; model is NOT redistributed unless all licenses permissive.
+# Loader verifies each entry exists + records license before use (anti-hallucination:
+# every entry starts verified:false and must be checked, not assumed).
+sources:
+  - name: smartbugs-curated
+    url: "https://github.com/smartbugs/smartbugs-curated"
+    license: "unknown"        # verify on ingest
+    split: "train"
+    verified: false
+  - name: swc-registry
+    url: "https://github.com/SmartContractSecurity/SWC-registry"
+    license: "unknown"
+    split: "train"
+    verified: false
+# NOTE: benchmark names from the GPT spec (EVMbench, SCONE-bench, Forest-of-Audits)
+# are UNVERIFIED and deliberately NOT listed until existence+license are confirmed.

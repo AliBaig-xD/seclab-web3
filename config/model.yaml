@@ -1,0 +1,16 @@
+# Inference model — swap models by editing THIS FILE ONLY (D3/D11).
+server: ollama                 # ollama | vllm | llamacpp
+endpoint: "http://127.0.0.1:11434"
+model_ref: "qwen2.5-coder:14b"
+revision: null                 # frozen digest, filled by provision
+quantization: "Q4_K_M"
+context_tokens: 16384
+# Determinism (WORKFLOW Layer 2): temp 0 + fixed seed; doctor records output hash.
+params:
+  temperature: 0.0
+  seed: 0
+  top_p: 1.0
+# Optional frontier escalation — OFF by default (D1). Never used unless flipped on.
+fallback:
+  enabled: false
+  provider: null

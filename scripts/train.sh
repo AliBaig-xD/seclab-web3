@@ -9,7 +9,7 @@ PYBASE=/opt/pytorch/bin/python
 "$VENV/bin/pip" install -q -U pip
 "$VENV/bin/pip" install -q -r training/requirements.txt
 PY="$VENV/bin/python"
-export HF_HOME=/opt/dlami/nvme/seclab/hf PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export HF_HOME=/opt/dlami/nvme/seclab/hf
 
 OLLAMA_WAS_UP=0
 if docker ps --format '{{.Names}}' | grep -q seclab-ollama; then

@@ -10,7 +10,7 @@ lora:
   dropout: 0.05
   target_modules: "all-linear"
 train:
-  seq_len: 1024
+  seq_len: 768
   lr: 2.0e-4
   epochs: 1
   batch_size: 1

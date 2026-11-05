@@ -10,6 +10,7 @@ from .tools.semgrep import SemgrepScanner
 from .tools.mythril import MythrilScanner
 from .tools.halmos import HalmosScanner
 from .tools.echidna import EchidnaScanner
+from .tools.medusa import MedusaScanner
 from .tools.foundry import FoundryPoCVerifier
 from .report import render_markdown
 
@@ -44,6 +45,7 @@ def main(argv=None):
         scanners.append(MythrilScanner())
         scanners.append(HalmosScanner())
         scanners.append(EchidnaScanner())
+        scanners.append(MedusaScanner())
     verifiers = []
     if a.poc_test:
         verifiers.append(FoundryPoCVerifier(a.poc_test, a.poc_family))

@@ -67,3 +67,19 @@ automatic **resume** (re-running skips targets already done; `--no-resume` force
 2. `seclab batch corpus.txt --fast` — cheap triage, read the leaderboard.
 3. `seclab batch <shortlist>.txt --llm --swarm --exploit` — deep pass on anything with findings.
 4. Open the top run dirs' `report.md` / `disclosure.md`; only PROVEN/CORROBORATED are reportable.
+
+## API keys (optional but recommended)
+
+The lab works with **no keys** (Sourcify is free). Two features improve with an Etherscan
+API key (free at etherscan.io/apis): the on-chain fetch *fallback* for contracts Sourcify
+hasn't indexed, and the exact deploy-date target filter (`--before/--after`).
+
+Put secrets in a gitignored `.env` at the repo root — every `seclab` run loads it
+automatically (no shell setup needed):
+
+```
+# ~/seclab-web3/.env   (chmod 600; never committed)
+ETHERSCAN_API_KEY=<your-free-key>
+```
+
+Verify it's picked up: `python3 -c "import orchestrator.config,os;print(bool(os.environ.get('ETHERSCAN_API_KEY')))"` → `True`.

@@ -10,6 +10,7 @@ import argparse, json, os, sys
 from .harness import ResearchHarness, ScanOptions
 from .targets import resolve_target, harvest_targets
 from .batch import run_batch
+from . import config  # noqa: F401  (loads .env)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

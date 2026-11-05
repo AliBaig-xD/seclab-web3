@@ -17,12 +17,13 @@ class OllamaClient:
         except Exception:
             return False
 
-    def generate(self, prompt: str, system: str | None = None) -> str:
+    def generate(self, prompt: str, system: str | None = None,
+                 temperature: float | None = None, seed: int | None = None) -> str:
         body = {
             "model": self.model, "prompt": prompt, "stream": False,
             "options": {
-                "temperature": self.params.get("temperature", 0),
-                "seed": self.params.get("seed", 0),
+                "temperature": self.params.get("temperature", 0) if temperature is None else temperature,
+                "seed": self.params.get("seed", 0) if seed is None else seed,
                 "top_p": self.params.get("top_p", 1.0),
             },
         }

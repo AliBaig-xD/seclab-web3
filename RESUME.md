@@ -85,7 +85,7 @@ ollama). Remaining big levers: Go/Rust client analyzer, web dashboard, Dockerfil
 - Base RAISED to **Qwen2.5-Coder-7B-Instruct** (14B OOMs T4 15GB; 1.5B was only for fast iteration
   on the tiny set). 7B FITS at seq_len 768 on a CLEAN GPU (the earlier OOM was a zombie proc holding
   7.6GB + the `expandable_segments` VA over-reserve, both removed).
-- Throughput ~220s/opt-step => ~58h/epoch on T4. Training launched in tmux session `train`
+- Throughput: STEADY-STATE ~30s/step (the probe's 220s/step was load-skewed over 6 steps); ~8h/epoch, ~16h for 2 epochs on T4 (some variance from group_by_length). Training launched in tmux session `train`
   (scripts/train.sh), epochs 2, checkpoints every 100 steps to model/adapters/checkpoint-*.
   RESUMABLE: scripts/resume_train.sh. Baseline 1.5B adapter kept at model/adapters_baseline/.
 - Plan: continue/finish on the bigger GPU the user will add (config is hardware-agnostic).

@@ -30,3 +30,24 @@ def read_sources(target_dir: str, max_chars: int = 40000) -> str:
         parts.append(chunk)
         total += len(chunk)
     return "".join(parts)
+
+
+def read_source_files(target_dir: str) -> dict:
+    """{relative_path: content} for Solidity sources under src/ and contracts/."""
+    out = {}
+    for base in ("src", "contracts"):
+        for p in glob.glob(os.path.join(target_dir, base, "**", "*.sol"), recursive=True):
+            try:
+                out[os.path.relpath(p, target_dir)] = open(p).read()
+            except Exception:
+                continue
+    return out
+
+
+def source_for_contract(files: dict, contract: str) -> str:
+    import re as _re
+    pat = _re.compile(r"\bcontract\s+" + _re.escape(contract) + r"\b")
+    for _p, src in files.items():
+        if pat.search(src):
+            return src
+    return ""

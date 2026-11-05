@@ -28,7 +28,8 @@ def _severity(f: Finding) -> Severity:
 
 class Pipeline:
     def __init__(self, store: EvidenceStore, scanners, verifiers,
-                 reviewer=None, researcher=None, llm_code=None, protocol=None):
+                 reviewer=None, researcher=None, llm_code=None, protocol=None,
+                 seed_hypotheses=None):
         self.store = store
         self.scanners = scanners
         self.verifiers = verifiers
@@ -37,6 +38,7 @@ class Pipeline:
         self.llm_code = llm_code
         self.protocol = protocol
         self.protocol_model = None
+        self.seed_hypotheses = seed_hypotheses or []
 
     def run(self, run_id: str, target_dir: str, target_id: str):
         self.store.start_run(run_id, target_id)
@@ -69,6 +71,12 @@ class Pipeline:
                 f.evidence.append(Evidence(kind="llm", tool="model",
                                            summary=h.rationale or h.claimed_impact,
                                            deterministic=False))
+
+        for h in self.seed_hypotheses:
+            f = add(h)
+            f.evidence.append(Evidence(kind="llm", tool="swarm",
+                                       summary=(h.rationale or h.claimed_impact)[:140],
+                                       deterministic=False))
 
         findings = list(fmap.values())
         for f in findings:

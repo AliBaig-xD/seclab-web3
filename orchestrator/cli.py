@@ -28,6 +28,8 @@ def main(argv=None):
     ap.add_argument("--report")
     ap.add_argument("--llm", action="store_true", help="enable live LLM researcher")
     ap.add_argument("--fast", action="store_true", help="skip slow symbolic/fuzz engines")
+    ap.add_argument("--swarm", action="store_true", help="graph-sliced map-reduce hypothesis engine")
+    ap.add_argument("--swarm-concurrency", type=int, default=1)
     a = ap.parse_args(argv)
 
     os.chdir(ROOT)
@@ -54,7 +56,8 @@ def main(argv=None):
     reviewer = None
     protocol = None
     llm_code = None
-    if a.llm:
+    seed = []
+    if a.llm or a.swarm:
         from .model_client import OllamaClient
         from .researcher import Researcher
         from .config import load_model_config
@@ -69,14 +72,36 @@ def main(argv=None):
             protocol = ProtocolIntelligence(client)
             llm_code = read_sources(target)
             print(f"[llm] researcher+reviewer+protocol enabled ({mc['model_ref']}), {len(llm_code)} chars")
+            if a.swarm:
+                from .codeintel import extract as ci_extract, build_slices, interaction_pairs
+                from .swarm import SwarmEngine
+                from .ingest import read_source_files, source_for_contract
+                ci = ci_extract(target)
+                slices = build_slices(ci)
+                pairs = interaction_pairs(ci)
+                files = read_source_files(target)
+                srcs = {c["contract"]: source_for_contract(files, c["contract"])
+                        for c in ci.get("contracts", [])}
+                pm = protocol.analyze(llm_code)
+                eng = SwarmEngine(client, concurrency=a.swarm_concurrency)
+                seed = eng.run(slices, pairs, srcs, pm)
+                print(f"[swarm] slices={eng.stats['slices']} deep={eng.stats['deep']} "
+                      f"pairs={eng.stats['pairs']} hypotheses={len(seed)}")
+                researcher = None      # swarm supersedes the single-shot researcher
+                protocol = None        # model already computed
+                _precomputed_protocol = pm
+                globals()["_PRECOMPUTED_PROTOCOL"] = pm
         else:
             print("[llm] model endpoint unavailable; proceeding static-only")
 
     run_id = a.run_id or f"run-{int(time.time())}"
     print(f"[run] {run_id} scanning {target}")
     pipe = Pipeline(store, scanners, verifiers, reviewer=reviewer,
-                    researcher=researcher, llm_code=llm_code, protocol=protocol)
+                    researcher=researcher, llm_code=llm_code, protocol=protocol,
+                    seed_hypotheses=seed)
     findings = pipe.run(run_id, target, tid)
+    if pipe.protocol_model is None:
+        pipe.protocol_model = globals().get("_PRECOMPUTED_PROTOCOL")
 
     md = render_markdown({"target": tid, "run_id": run_id, "protocol": pipe.protocol_model}, findings)
     out = a.report or f"results/report-{run_id}.md"

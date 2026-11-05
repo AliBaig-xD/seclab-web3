@@ -1,0 +1,33 @@
+# seclab-web3 Solidity semgrep rules (original work; repo-licensed).
+# High-signal structural patterns that complement Slither/Aderyn.
+rules:
+  - id: low-level-call-with-value
+    languages: [solidity]
+    severity: WARNING
+    message: Low-level call forwarding value; enforce checks-effects-interactions and check the return value.
+    pattern: $A.call{value: $V}(...)
+  - id: tx-origin-auth
+    languages: [solidity]
+    severity: ERROR
+    message: tx.origin used; vulnerable to phishing/auth bypass. Use msg.sender.
+    pattern: tx.origin
+  - id: delegatecall-usage
+    languages: [solidity]
+    severity: WARNING
+    message: delegatecall executes external code in this contract storage context.
+    pattern: $A.delegatecall(...)
+  - id: selfdestruct-usage
+    languages: [solidity]
+    severity: ERROR
+    message: selfdestruct present; verify strict access control.
+    pattern: selfdestruct(...)
+  - id: block-timestamp-randomness
+    languages: [solidity]
+    severity: INFO
+    message: block.timestamp is miner-influenceable; not a source of randomness.
+    pattern: block.timestamp
+  - id: blockhash-randomness
+    languages: [solidity]
+    severity: INFO
+    message: blockhash is predictable within 256 blocks; not a source of randomness.
+    pattern: blockhash(...)

@@ -6,6 +6,7 @@ from .evidence import EvidenceStore
 from .pipeline import Pipeline
 from .tools.slither import SlitherScanner
 from .tools.aderyn import AderynScanner
+from .tools.semgrep import SemgrepScanner
 from .tools.foundry import FoundryPoCVerifier
 from .report import render_markdown
 
@@ -34,7 +35,7 @@ def main(argv=None):
 
     os.makedirs("results", exist_ok=True)
     store = EvidenceStore("results/evidence.db")
-    scanners = [SlitherScanner(), AderynScanner()]
+    scanners = [SlitherScanner(), AderynScanner(), SemgrepScanner()]
     verifiers = []
     if a.poc_test:
         verifiers.append(FoundryPoCVerifier(a.poc_test, a.poc_family))

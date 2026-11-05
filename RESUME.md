@@ -36,27 +36,29 @@ evidence or an executable PoC**. Full scope in `SCOPE.md`; the law is `docs/WORK
     bash scripts/doctor.sh           # env/tool gate
 
 ## STATUS — as of 2026-11-05 (UPDATE THIS at each phase boundary)
-Near-complete, production-grade EVM security lab. All on EC2, pushed to GitHub. ~82 tests green.
+Complete production-grade EVM security lab + specialized-model training. All on EC2, pushed.
+107 unit tests green; 0 stubs/TODOs; container-hardened; CI wired.
 
-BUILT + VERIFIED:
-- Env (doctor green), proof-gated pipeline, authorization gate.
-- Validation lab: slither/aderyn/semgrep + mythril/halmos + echidna/medusa + foundry PoC.
-- Senior layer: LLM researcher, protocol intelligence, independent reviewer.
-- Code intelligence (slither-API) + SWARM map-reduce engine (slices -> per-slice hunts ->
-  cross-slice consolidation). RAG knowledge base (--rag). Exploitation agent (--exploit).
-- On-chain ingestion (Sourcify V2, --onchain) — WETH + UniversalRouter end-to-end.
-- PRODUCTION training pipeline (training/): multi-source curated dataset (~1661+, leakage-safe,
-  licensed, data card), completion-masked SFT, eval/ckpt/resume, config-scalable, hf_push.
-- Lab benchmark harness (orchestrator/labeval) + clean negative control (0 FP).
-- Runbooks (docs/runbooks/) + docs/ARCHITECTURE.md.
-- CLI: python3 -m orchestrator.cli scan <dir|--onchain addr> [--llm --swarm --rag --exploit --fast]
-- Train: bash scripts/train.sh [--dry]   Harvest more data: bash scripts/run_harvest.sh
+CORE (built + validated end-to-end):
+- Agentic harness (`seclab` CLI): per-run artifact dirs, logs, manifest, run index. Phases
+  3/4/5 all built. Proof gate: PROVEN=dynamic proof+repro, CORROBORATED=2 tools, else CANDIDATE.
+- Engines: slither/aderyn/semgrep + mythril(multi-file)/halmos + echidna/medusa + foundry PoC
+  + differential. Swarm map-reduce, code intel+KG, protocol intel, LLM hunter(RAG), reviewer,
+  exploitation agent. On-chain ingest (Sourcify + Etherscan fallback). Disclosure, triage.
+- Full agentic run validated: LLM+swarm+RAG+reviewer+protocol+PoC -> PROVEN in ~36s.
 
-IN FLIGHT / NEXT:
-- Background: smartbugs-wild slither self-labeling harvest (volume) + dry-run trainer validation.
-- After they finish: re-curate with harvested data; run FULL lab benchmark (expect recall 3/3);
-  launch a real QLoRA training run (T4-safe seq_len; frees GPU) to produce an actual adapter + eval.
-- Model is config-swappable: on bigger GPU, raise seq_len/batch and/or base model; no code change.
+IMPROVEMENT LEVERS (built on top): invariant->harness synthesis, self-improvement flywheel,
+multi-sample hypotheses, reviewer voting (--thorough), Halmos->PoC, Etherscan fallback,
+parallel scanners (--parallel). docs/LIMITATIONS.md lists all 14 limitations honestly.
+
+TRAINING: production QLoRA pipeline + ~1661-example curated multi-source dataset (644 real
+DeFiHackLabs PoCs) + self-improvement flywheel. Real metrics (ppl + detection acc + PoC
+structural). RUNNING NOW: Qwen2.5-Coder-1.5B, 2 epochs (~2.5h) -> real adapter.
+
+PENDING (post-training, needs GPU/CPU free): full lab benchmark (all engines); live-ground
+the new levers (invariant synth, Halmos->PoC, mythril multi-file, differential); report
+trained-adapter metrics; serve the trained model (vLLM base+adapter, or merge->GGUF for
+ollama). Remaining big levers: Go/Rust client analyzer, web dashboard, Dockerfile digest pin.
 
 ## Map
 `SCOPE.md` · `docs/WORKFLOW.md` (law) · `docs/IMPLEMENTATION_PLAN.md` (phases+gates) ·

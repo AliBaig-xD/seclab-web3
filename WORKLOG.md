@@ -104,3 +104,16 @@ Format: `date · phase · action · command/evidence · result · gate`
 - Lab benchmark harness (recall/FP/PoC-repro) + clean negative control (0 FP verified static).
 - Runbooks + architecture doc. ~82 unit tests green.
 - Background: smartbugs-wild self-labeling harvest + dry-run trainer validation running.
+
+## 2026-11-05 · Limitation levers (user: do all but "bigger model")
+- Honest limitations doc (docs/LIMITATIONS.md): ~14, all mitigated, all improvable; only
+  "bigger/stronger model" is hardware-blocked.
+- Built levers: (#3) invariant->fuzz/symbolic harness synthesis + harness wiring; (#1/#9)
+  self-improvement flywheel (verified findings -> training data, detection+PoC); (#8)
+  multi-sample hypotheses; (#5) reviewer self-consistency voting (--thorough); (#2) Halmos
+  counterexample -> deterministic PoC (elevates symbolic to PROVEN); (#7) Etherscan source
+  fallback; (#6) resource-capped parallel scanners (--parallel). 107 tests green.
+- Prod-hardening: container resource limits + no-new-privileges, tool-version provenance,
+  run index, CI workflow.
+- Training: 14B OOMs on T4; 7B is ~11h/run; training Qwen2.5-Coder-1.5B 2 epochs (~2.5h) on
+  1144 examples -> real adapter + eval. Pipeline trains any size unchanged on bigger HW.

@@ -48,3 +48,13 @@ Format: `date · phase · action · command/evidence · result · gate`
 - Container pattern locked: root-in-container (the sandbox) + HOME=/cache on scratch for
   solc/svm caches; tools live under /root so --user is not used.
 - Fixed git author identity to AliBaig-xD GitHub noreply (was dev@archrco.com).
+
+## 2026-11-05 · Phase 3/4 · REAL end-to-end pipeline proven
+- Wired SlitherScanner + FoundryPoCVerifier + correlation Pipeline + CLI (orchestrator/cli.py).
+- Live run on reentrancy-etherstore: reentrancy -> PROVEN [HIGH] (slither + passing PoC + repro);
+  solc-version/low-level-calls correctly demoted to CANDIDATE (not reported). 38 tests green.
+- Orchestrator runs on host python3 (has pyyaml 6.0.3); tools via docker (host paths).
+- Added scripts/hf_push.sh (private HF upload for trained adapters).
+- NEXT: live-target ingestion (Sourcify/Etherscan source + anvil fork); broaden scanners
+  (semgrep/aderyn), symbolic (halmos/mythril), fuzz (echidna/medusa); live LLM researcher;
+  exploitation agent (LLM-generated PoC); then Phase 7 training pipeline.

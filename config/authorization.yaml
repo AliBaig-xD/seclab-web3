@@ -1,0 +1,7 @@
+targets:
+  - id: reentrancy-etherstore
+    source: eval/corpus/reentrancy-etherstore
+    basis: own
+    poc_allowed: true
+    affirmed_by: dev@archrco.com
+    affirmed_date: "2026-11-05"

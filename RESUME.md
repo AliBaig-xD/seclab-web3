@@ -37,17 +37,17 @@ evidence or an executable PoC**. Full scope in `SCOPE.md`; the law is `docs/WORK
 
 ## STATUS — as of 2026-11-05 (UPDATE THIS at each phase boundary)
 - Phase 0 (governance): DONE.
-- Phase 1 (reproducible env): **DONE — doctor ALL GREEN.** Model server (14B, deterministic)
-  + full analysis toolchain verified. Versions frozen in config/versions.env +
-  docker/requirements.lock.txt. Re-verify anytime: `bash scripts/doctor.sh`.
-- Harness code DONE + unit-tested (34 tests, `bash scripts/test.sh`): schema, evidence
-  store, authorization scope gate, config, model_client, runner, slither parser,
-  researcher (injection-fenced), triage, report. NOT yet wired to real tools.
-- NEXT (Phase 3/4): wire the REAL verifiers (slither/semgrep/halmos/echidna/medusa +
-  Foundry fork-PoC) into the runner and prove the full chain end-to-end on a known
-  reentrancy contract (-> PoC drain on an Anvil fork). This is the key milestone.
-- TRACKED follow-up (Phase 1 hardening): rebuild Dockerfile from pinned tags + lock
-  for byte-level reproducibility.
+- Phase 1 (reproducible env): DONE — doctor ALL GREEN, versions frozen.
+- Harness + REAL pipeline: DONE for the static+PoC path (38 tests green). Live CLI run on
+  eval/corpus/reentrancy-etherstore produced a PROVEN [HIGH] reentrancy finding with a
+  passing Foundry PoC; informational detectors correctly demoted to CANDIDATE.
+  Entry point: `python3 -m orchestrator.cli scan <dir> --poc-test <t> --poc-family <f>`.
+- Authorization gate enforced for every target (own|bounty|engagement); PoCs sandboxed to forks.
+- NEXT (in order): (1) live-target ingestion = fetch verified source (Sourcify/Etherscan)
+  + `anvil --fork-url` for on-chain targets; (2) broaden scanners: semgrep + aderyn real
+  adapters; (3) symbolic: halmos + mythril(isolated) verifiers; (4) fuzz: echidna + medusa;
+  (5) live LLM researcher (14B) + exploitation agent (LLM-generated PoC); (6) Phase 7
+  training pipeline (/opt/pytorch, python3.13+torch) + scripts/hf_push.sh for private HF.
 
 ## Map
 `SCOPE.md` · `docs/WORKFLOW.md` (law) · `docs/IMPLEMENTATION_PLAN.md` (phases+gates) ·

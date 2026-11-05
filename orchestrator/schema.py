@@ -28,6 +28,8 @@ class Evidence:
     summary: str
     artifact_path: Optional[str] = None
     deterministic: bool = True
+    repro: Optional[str] = None
+    severity_hint: Optional[str] = None
     created: float = field(default_factory=time.time)
 
     def digest(self) -> str:

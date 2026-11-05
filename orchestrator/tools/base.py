@@ -1,21 +1,25 @@
-"""Tool adapter base + sandboxed container runner. All analysis tools execute inside
-the pinned analysis image, never on the host (docs/WORKFLOW.md sandboxing)."""
+"""Sandboxed tool runner. Tools run as root INSIDE the analysis container (the
+sandbox), with HOME on scratch so solc/svm caches persist. Host paths are passed
+directly (orchestrator runs on the host). Outputs are world-readable."""
 from __future__ import annotations
-import subprocess
+import os, subprocess
 
-IMAGE = "seclab-web3/analysis:latest"
+IMAGE = os.environ.get("SECLAB_IMAGE", "seclab-web3/analysis:latest")
+SCRATCH = os.environ.get("SECLAB_SCRATCH", "/opt/dlami/nvme/seclab")
 
 
-def run_tool(args: list[str], workdir: str, timeout: int = 600, image: str = IMAGE):
-    """Run a tool in the analysis container over a mounted workdir. Returns (rc, out, err)."""
-    cmd = ["docker", "run", "--rm", "-v", f"{workdir}:/work", "-w", "/work", image, *args]
-    p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+def run_tool(target_dir: str, cmd: str, timeout: int = 900, image: str = IMAGE):
+    """Run `cmd` in the analysis container over an absolute host target_dir."""
+    cache = f"{SCRATCH}/toolcache"
+    os.makedirs(cache, exist_ok=True)
+    dcmd = ["docker", "run", "--rm", "-e", "HOME=/cache",
+            "-v", f"{cache}:/cache", "-v", f"{target_dir}:/work", "-w", "/work",
+            image, "bash", "-c", cmd]
+    p = subprocess.run(dcmd, capture_output=True, text=True, timeout=timeout)
     return p.returncode, p.stdout, p.stderr
 
 
 class Verifier:
-    """Protocol: given a hypothesis + target workdir, return Evidence or None."""
     kind = "base"
-
-    def verify(self, hypothesis, target):  # pragma: no cover - interface
+    def verify(self, hypothesis, target):  # pragma: no cover
         raise NotImplementedError

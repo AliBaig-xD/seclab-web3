@@ -31,3 +31,23 @@ rules:
     severity: INFO
     message: "blockhash is predictable within 256 blocks; not a source of randomness."
     pattern: "blockhash(...)"
+  - id: ecrecover-usage
+    languages: [solidity]
+    severity: ERROR
+    message: "ecrecover used; check recovered != address(0), include a nonce + chainId, and reject malleable s (prefer EIP-712 / ECDSA.recover)."
+    pattern: "ecrecover(...)"
+  - id: abi-encodepacked-collision
+    languages: [solidity]
+    severity: WARNING
+    message: "abi.encodePacked with dynamic arguments can produce hash collisions; prefer abi.encode or length-prefix."
+    pattern: "abi.encodePacked(...)"
+  - id: block-number-dependence
+    languages: [solidity]
+    severity: INFO
+    message: "block.number is not a safe randomness or timing source (reorg/miner influence)."
+    pattern: "block.number"
+  - id: prevrandao-randomness
+    languages: [solidity]
+    severity: INFO
+    message: "block.prevrandao is biasable by proposers; not safe randomness."
+    pattern: "block.prevrandao"

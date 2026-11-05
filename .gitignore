@@ -1,0 +1,15 @@
+# secrets / keys
+*.pem
+.env
+.env.*
+# large/rebuildable artifacts
+model/weights/
+model/*.gguf
+*.safetensors
+eval/corpus/_cache/
+results/runs/
+**/__pycache__/
+.venv/
+node_modules/
+# run scratch
+*.log

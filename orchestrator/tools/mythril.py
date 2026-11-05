@@ -4,7 +4,7 @@ Multi-file via forge flatten; single-file direct."""
 from __future__ import annotations
 import json, os, re, glob, subprocess
 from ..schema import Hypothesis, Evidence
-from .base import SCRATCH, IMAGE, run_tool
+from .base import SCRATCH, IMAGE, DOCKER_SAFE, run_tool
 
 MYTH_IMAGE = os.environ.get("SECLAB_MYTHRIL_IMAGE", "seclab-web3/mythril:latest")
 SWC_FAMILY = {
@@ -55,7 +55,7 @@ class MythrilScanner:
         os.makedirs(work, exist_ok=True)
         with open(os.path.join(work, "flat.sol"), "w") as fh:
             fh.write(src_text)
-        cmd = ["docker", "run", "--rm", "-v", f"{work}:/work", "-w", "/work", MYTH_IMAGE,
+        cmd = ["docker", "run", "--rm", *DOCKER_SAFE, "-v", f"{work}:/work", "-w", "/work", MYTH_IMAGE,
                "analyze", "flat.sol", "--solv", solv, "-o", "json",
                "--execution-timeout", str(self.exec_timeout)]
         out = []

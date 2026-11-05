@@ -3,7 +3,7 @@ a shrunk call sequence is dynamic evidence. Runs in a scratch copy to avoid litt
 from __future__ import annotations
 import os, re, subprocess
 from ..schema import Hypothesis, Evidence
-from .base import IMAGE, SCRATCH
+from .base import IMAGE, SCRATCH, DOCKER_SAFE
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -38,7 +38,7 @@ class MedusaScanner:
             '.fuzzing.testing.assertionTesting.enabled=true" medusa.json > m2 && mv m2 medusa.json; '
             'medusa fuzz 2>&1' % self.test_limit
         )
-        cmd = ["docker", "run", "--rm", "-e", "HOME=/cache", "-v", f"{SCRATCH}/toolcache:/cache",
+        cmd = ["docker", "run", "--rm", *DOCKER_SAFE, "-e", "HOME=/cache", "-v", f"{SCRATCH}/toolcache:/cache",
                "-v", f"{work}:/work", "-w", "/work", IMAGE, "bash", "-c", script]
         try:
             out = subprocess.run(cmd, capture_output=True, text=True, timeout=self.timeout).stdout

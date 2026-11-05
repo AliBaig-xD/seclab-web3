@@ -2,7 +2,7 @@
 interaction pairs. Foundation for graph-based slicing (Phase 9 swarm engine)."""
 from __future__ import annotations
 import json, os, subprocess
-from .tools.base import IMAGE, SCRATCH
+from .tools.base import IMAGE, SCRATCH, DOCKER_SAFE
 
 SCRIPTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "analysis", "scripts")
 PRIV_HINTS = ("only", "auth", "admin", "owner", "governance", "restricted")
@@ -11,7 +11,7 @@ PRIV_HINTS = ("only", "auth", "admin", "owner", "governance", "restricted")
 def extract(target_dir: str, timeout: int = 600) -> dict:
     cache = f"{SCRATCH}/toolcache"
     os.makedirs(cache, exist_ok=True)
-    cmd = ["docker", "run", "--rm", "-e", "HOME=/cache", "-v", f"{cache}:/cache",
+    cmd = ["docker", "run", "--rm", *DOCKER_SAFE, "-e", "HOME=/cache", "-v", f"{cache}:/cache",
            "-v", f"{SCRIPTS_DIR}:/scripts:ro", "-v", f"{target_dir}:/work", "-w", "/work",
            IMAGE, "bash", "-c", "python3 -I /scripts/codeintel_extract.py 2>/dev/null"]
     try:

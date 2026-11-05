@@ -3,7 +3,7 @@ reproducing call sequence is dynamic evidence of an invariant violation."""
 from __future__ import annotations
 import os, re, glob, subprocess
 from ..schema import Hypothesis, Evidence
-from .base import IMAGE, SCRATCH
+from .base import IMAGE, SCRATCH, DOCKER_SAFE
 
 
 def parse_echidna_text(text: str):
@@ -54,7 +54,7 @@ class EchidnaScanner:
     def _run(self, target_dir: str, contract: str) -> str:
         cache = f"{SCRATCH}/toolcache"
         os.makedirs(cache, exist_ok=True)
-        cmd = ["docker", "run", "--rm", "-e", "HOME=/cache", "-v", f"{cache}:/cache",
+        cmd = ["docker", "run", "--rm", *DOCKER_SAFE, "-e", "HOME=/cache", "-v", f"{cache}:/cache",
                "-v", f"{target_dir}:/work", "-w", "/work", IMAGE, "bash", "-c",
                f"echidna . --contract {contract} --test-mode property --test-limit {self.test_limit} 2>&1"]
         try:

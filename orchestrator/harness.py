@@ -184,7 +184,17 @@ class ResearchHarness:
 
         reportable = [f for f in findings if f.reportable]
         proven = [f for f in findings if f.tier.value == "PROVEN"]
+        from .tools.base import tool_versions
+        import sqlite3
+        idx = sqlite3.connect(os.path.join(ROOT, "results", "run_index.db"))
+        idx.execute("CREATE TABLE IF NOT EXISTS runs(run_id TEXT, target TEXT, basis TEXT, "
+                    "findings INT, reportable INT, proven INT, wall_s REAL, ts TEXT)")
+        idx.execute("INSERT INTO runs VALUES(?,?,?,?,?,?,?,datetime('now'))",
+                    (run_id, tid, rec.get("basis"), len(findings), len(reportable),
+                     len(proven), round(time.time() - t_start, 1)))
+        idx.commit(); idx.close()
         manifest = {
+            "tool_versions": tool_versions(),
             "run_id": run_id, "target": tid, "basis": rec.get("basis"),
             "options": opt.__dict__, "engines": "fast" if opt.fast else "full",
             "findings": len(findings), "reportable": len(reportable), "proven": len(proven),

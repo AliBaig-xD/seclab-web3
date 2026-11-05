@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-05T03:48:53",
+  "generated": "2026-11-05T03:58:51",
   "total": 1661,
   "splits": {
     "train": 1144,
@@ -93,7 +93,8 @@
     "defihacklabs": 644,
     "web3bugs": 476,
     "defivulnlabs": 57,
-    "slither_wild": 0
+    "slither_wild": 0,
+    "verified": 0
   },
   "licenses": [
     "Apache-2.0",

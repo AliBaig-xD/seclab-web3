@@ -32,6 +32,7 @@ class ScanOptions:
     swarm_concurrency: int = 1
     samples: int = 1
     votes: int = 1
+    scanner_concurrency: int = 1
     verbose: bool = False
 
 
@@ -190,7 +191,8 @@ class ResearchHarness:
         store = EvidenceStore(os.path.join(run_dir, "evidence.db"))
         pipe = Pipeline(store, scanners, verifiers, reviewer=reviewer, researcher=researcher,
                         llm_code=llm_code, protocol=protocol, seed_hypotheses=seed,
-                        exploiter=exploiter, source_files=read_source_files(target))
+                        exploiter=exploiter, source_files=read_source_files(target),
+                        scanner_concurrency=opt.scanner_concurrency)
         findings = pipe.run(run_id, target, tid)
 
         # --- outputs ---

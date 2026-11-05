@@ -109,3 +109,25 @@ def test_exploiter_upgrades_candidate_to_proven(tmp_path):
     fs = Pipeline(s, [StaticOnly()], [], exploiter=WinningExploiter(),
                   source_files={"src/Vault.sol": "contract Vault {}"}).run("r1", str(tmp_path), "t")
     assert fs[0].tier == Tier.PROVEN and fs[0].repro_cmd
+
+
+def test_parallel_scanners_merge(tmp_path):
+    from orchestrator.schema import Hypothesis, Evidence
+    from orchestrator.evidence import EvidenceStore
+    from orchestrator.pipeline import Pipeline
+
+    class S1:
+        kind = "slither"
+        def scan(self, t):
+            return [(Hypothesis("reentrancy", "A.sol:1", "p", "i", source="static"),
+                     Evidence(kind="slither", tool="slither", summary="x", severity_hint="HIGH"))]
+
+    class S2:
+        kind = "mythril"
+        def scan(self, t):
+            return [(Hypothesis("reentrancy", "A.sol:1", "p", "i", source="symbolic"),
+                     Evidence(kind="mythril", tool="mythril", summary="y", severity_hint="HIGH"))]
+    s = EvidenceStore(str(tmp_path / "e.db"))
+    fs = Pipeline(s, [S1(), S2()], [], scanner_concurrency=2).run("r1", str(tmp_path), "t")
+    # both scanners ran concurrently and merged into one corroborated finding
+    assert len(fs) == 1 and fs[0].reportable

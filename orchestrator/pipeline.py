@@ -45,7 +45,8 @@ def _severity(f: Finding) -> Severity:
 class Pipeline:
     def __init__(self, store: EvidenceStore, scanners, verifiers,
                  reviewer=None, researcher=None, llm_code=None, protocol=None,
-                 seed_hypotheses=None, exploiter=None, source_files=None, max_exploits=5):
+                 seed_hypotheses=None, exploiter=None, source_files=None, max_exploits=5,
+                 scanner_concurrency=1):
         self.store = store
         self.scanners = scanners
         self.verifiers = verifiers
@@ -58,6 +59,7 @@ class Pipeline:
         self.exploiter = exploiter
         self.source_files = source_files or {}
         self.max_exploits = max_exploits
+        self.scanner_concurrency = max(1, scanner_concurrency)
 
     def run(self, run_id: str, target_dir: str, target_id: str):
         self.store.start_run(run_id, target_id)
@@ -81,9 +83,25 @@ class Pipeline:
                 f.evidence.append(ev)
             return f
 
-        for sc in self.scanners:
-            for h, ev in sc.scan(target_dir):
-                add(h, ev)
+        if self.scanner_concurrency > 1 and len(self.scanners) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            def _safe(sc):
+                try:
+                    return sc.scan(target_dir)
+                except Exception:
+                    return []
+            with ThreadPoolExecutor(max_workers=self.scanner_concurrency) as ex:
+                batches = list(ex.map(_safe, self.scanners))
+            for batch in batches:
+                for h, ev in batch:
+                    add(h, ev)
+        else:
+            for sc in self.scanners:
+                try:
+                    for h, ev in sc.scan(target_dir):
+                        add(h, ev)
+                except Exception:
+                    pass
 
         if self.researcher is not None and self.llm_code:
             for h in self.researcher.hypothesize(self.llm_code, hints):

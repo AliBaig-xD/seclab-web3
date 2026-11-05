@@ -13,3 +13,4 @@ results/runs/
 node_modules/
 # run scratch
 *.log
+results/doctor-*.txt

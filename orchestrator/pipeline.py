@@ -2,6 +2,7 @@
 the LLM researcher may add hypotheses; verifiers attach confirming evidence; the
 Finding's tier is derived from the accumulated evidence (docs/WORKFLOW.md L2)."""
 from __future__ import annotations
+import os
 from .schema import Hypothesis, Finding, Evidence, Severity
 from .evidence import EvidenceStore
 from .triage import SEV_W
@@ -40,7 +41,7 @@ class Pipeline:
         fmap: dict = {}
 
         def add(h: Hypothesis, ev: Evidence | None = None) -> Finding:
-            key = (family(h.vuln_type), h.location.split(":")[0])
+            key = (family(h.vuln_type), os.path.basename(h.location.split(":")[0]))
             f = fmap.get(key)
             if f is None:
                 f = Finding(hypothesis=h)

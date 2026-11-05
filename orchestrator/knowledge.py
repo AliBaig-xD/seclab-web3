@@ -2,7 +2,7 @@
 default; Ollama semantic embeddings when available), SQLite vector store, cosine search.
 Grounds the LLM in vuln-class knowledge (swappable to pgvector/Qdrant later)."""
 from __future__ import annotations
-import hashlib, json, math, os, re, sqlite3, urllib.request
+import hashlib, json, math, os, re, sqlite3, threading, urllib.request
 
 
 def cosine(a, b) -> float:
@@ -46,23 +46,26 @@ class KnowledgeBase:
         d = os.path.dirname(db_path)
         if d:
             os.makedirs(d, exist_ok=True)
-        self._c = sqlite3.connect(db_path)
+        self._c = sqlite3.connect(db_path, check_same_thread=False)
+        self._lock = threading.Lock()
         self._c.execute("CREATE TABLE IF NOT EXISTS kb(id INTEGER PRIMARY KEY, source TEXT, "
                         "title TEXT, text TEXT, emb TEXT)")
         self._c.commit()
 
     def add(self, source: str, title: str, text: str):
         emb = json.dumps(self.embedder.embed(f"{title}\n{text}"))
-        self._c.execute("INSERT INTO kb(source,title,text,emb) VALUES(?,?,?,?)",
-                        (source, title, text, emb))
-        self._c.commit()
+        with self._lock:
+            self._c.execute("INSERT INTO kb(source,title,text,emb) VALUES(?,?,?,?)",
+                            (source, title, text, emb))
+            self._c.commit()
 
     def count(self) -> int:
         return self._c.execute("SELECT COUNT(*) FROM kb").fetchone()[0]
 
     def query(self, text: str, k: int = 4):
         q = self.embedder.embed(text)
-        rows = self._c.execute("SELECT title,text,emb FROM kb").fetchall()
+        with self._lock:
+            rows = self._c.execute("SELECT title,text,emb FROM kb").fetchall()
         scored = [(cosine(q, json.loads(e)), t, x) for t, x, e in rows]
         scored.sort(reverse=True)
         return [{"title": t, "text": x, "score": round(s, 3)} for s, t, x in scored[:k] if s > 0]

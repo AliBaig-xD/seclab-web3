@@ -39,10 +39,11 @@ class LLMReviewer:
                   f"- evidence: {ev}\n\n<UNTRUSTED_CODE>\n{code[:6000]}\n</UNTRUSTED_CODE>\n\nVerdict?")
         fp = 0
         for i in range(self.votes):
-            temp = 0.4 if self.votes > 1 else None
-            seed = i if self.votes > 1 else None
-            if parse_verdict(self.client.generate(prompt, system=SYSTEM_REVIEW,
-                                                  temperature=temp, seed=seed)) == "false_positive":
+            if self.votes > 1:
+                v = self.client.generate(prompt, system=SYSTEM_REVIEW, temperature=0.4, seed=i)
+            else:
+                v = self.client.generate(prompt, system=SYSTEM_REVIEW)
+            if parse_verdict(v) == "false_positive":
                 fp += 1
         if fp * 2 > self.votes:   # majority
             finding.notes += f"[reviewer majority false-positive {fp}/{self.votes}] "

@@ -83,9 +83,10 @@ class Researcher:
         seen = {}
         reps = self.samples
         for i in range(reps):
-            temp = self.explore_temp if reps > 1 else None
-            seed = i if reps > 1 else None
-            for h in parse_hypotheses(self.client.generate(prompt, system=SYSTEM,
-                                                           temperature=temp, seed=seed)):
+            if reps > 1:
+                resp = self.client.generate(prompt, system=SYSTEM, temperature=self.explore_temp, seed=i)
+            else:
+                resp = self.client.generate(prompt, system=SYSTEM)
+            for h in parse_hypotheses(resp):
                 seen.setdefault(h.id, h)
         return list(seen.values())

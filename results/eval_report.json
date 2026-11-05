@@ -1,0 +1,13 @@
+{
+  "base": "Qwen/Qwen2.5-0.5B-Instruct",
+  "adapter": "/opt/dlami/nvme/seclab/adapter-dry",
+  "test_rows": 276,
+  "perplexity": 13.42,
+  "A_detection_accuracy": 0.875,
+  "C_poc_structural_rate": 0.0,
+  "counts": {
+    "A": 98,
+    "B": 79,
+    "C": 99
+  }
+}

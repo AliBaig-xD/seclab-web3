@@ -15,3 +15,18 @@ sources:
     verified: false
 # NOTE: benchmark names from the GPT spec (EVMbench, SCONE-bench, Forest-of-Audits)
 # are UNVERIFIED and deliberately NOT listed until existence+license are confirmed.
+  - name: cve-smart-contracts-2026-08
+    url: "https://zenodo.org/ (CVE Smart Contracts, Aug 2026, 491 labeled)"
+    license: "unknown"
+    split: "train"
+    verified: false
+  - name: solidifi
+    url: "https://github.com/DependableSystemsLab/SolidiFI-benchmark"
+    license: "unknown"
+    split: "eval"
+    verified: false
+  - name: web3bugs
+    url: "https://github.com/ZhangZhuoSJTU/Web3Bugs"
+    license: "unknown"
+    split: "eval"
+    verified: false

@@ -44,3 +44,19 @@ Curated known/unseen corpus (every source verified + licensed; GPT-spec benchmar
 
 ## Operating mode during autonomous build
 Work proceeds phase by phase without pausing for approval. Long box tasks run under tmux/background. Blockers or decisions that need the user are surfaced immediately; otherwise defaults in DECISIONS apply.
+
+## Architecture components -> phases (full-spectrum, nothing descoped)
+- Research orchestrator: Phase 3 (built: ingest+pipeline+CLI).
+- Code intelligence (Tree-sitter/AST/call-graph/storage/dataflow): Phase 3b (planned).
+- **Protocol intelligence** (economic assumptions, invariants, trust boundaries,
+  protocol-level adversarial questions): Phase 5a (planned) — feeds the hunter + fuzz invariants.
+- Vulnerability hunter (LLM researcher): Phase 5 (built: live 14B).
+- Independent reviewer (adversarial falsification): Phase 5b (hook built; live reviewer planned).
+- Validation lab: Phase 4 — Foundry/Anvil PoC built; Slither built; semgrep/aderyn/halmos/
+  mythril/echidna/medusa adapters in progress.
+- Live-target ingestion (Sourcify/Etherscan source + anvil --fork-url): Phase 3c (planned).
+- Reporting + triage + disclosure: Phase 6 (built: proof-gated report + triage).
+- RAG/KG (vector store): Phase 5c (planned).
+- Exploitation agent (LLM-generated Foundry PoC, auto-iterated): Phase 4b (planned).
+- Training (3-part, config-driven QLoRA on /opt/pytorch) + HF push: Phase 7 (planned; hf_push built).
+- Evaluation harness + negative controls + regression CI: Phase 8 (planned).

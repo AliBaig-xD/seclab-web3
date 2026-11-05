@@ -275,12 +275,242 @@ def load_verified(path: str) -> list[Example]:
     return out
 
 
+
+# ---------------- FORGE (27k+ real audit findings; MIT) ----------------
+FORGE_KW = [
+    ("reentran", "reentrancy"), ("cross-function", "reentrancy"),
+    ("access control", "access_control"), ("unauthor", "access_control"),
+    ("only owner", "access_control"), ("privileg", "access_control"), ("tx.origin", "access_control"),
+    ("overflow", "arithmetic"), ("underflow", "arithmetic"), ("rounding", "arithmetic"),
+    ("precision", "arithmetic"), ("truncat", "arithmetic"),
+    ("oracle", "oracle-manipulation"), ("price manipul", "oracle-manipulation"),
+    ("flash loan", "flash-loan"), ("flashloan", "flash-loan"),
+    ("signature", "signature-replay"), ("replay", "signature-replay"), ("ecrecover", "signature-replay"),
+    ("delegatecall", "delegatecall"), ("front-run", "front_running"), ("frontrun", "front_running"),
+    ("sandwich", "front_running"), ("slippage", "front_running"),
+    ("denial of service", "denial_of_service"), ("dos", "denial_of_service"), ("griefing", "denial_of_service"),
+    ("timestamp", "time_manipulation"), ("randomness", "bad_randomness"),
+    ("uninitialized", "uninitialized-storage"), ("unchecked", "unchecked_low_level_calls"),
+    ("return value", "unchecked_low_level_calls"), ("approval", "access_control"),
+    ("liquidat", "defi-liquidation"), ("donation", "first-deposit-inflation"), ("inflation attack", "first-deposit-inflation"),
+]
+
+
+def _flatten_cwes(cat) -> str:
+    vals = []
+    if isinstance(cat, dict):
+        for v in cat.values():
+            vals += v if isinstance(v, list) else [v]
+    elif isinstance(cat, list):
+        vals = cat
+    elif cat:
+        vals = [cat]
+    return ", ".join(dict.fromkeys(str(v) for v in vals if v))
+
+
+def _forge_class(title: str, desc: str) -> str:
+    t = (title + " " + desc).lower()
+    for k, v in FORGE_KW:
+        if k in t:
+            return v
+    return "audit-finding"
+
+
+def _forge_line(locs) -> int:
+    for loc in (locs or []):
+        m = re.search(r"#(\d+)", loc or "")
+        if m:
+            return int(m.group(1))
+    return 0
+
+
+def _window(src: str, line: int, before: int = 40, after: int = 110, cap: int = 9000) -> str:
+    lines = src.split("\n")
+    if line and 1 <= line <= len(lines):
+        s, e = max(0, line - before), min(len(lines), line + after)
+        w = "\n".join(lines[s:e])
+    else:
+        w = src
+    return w[:cap]
+
+
+def _forge_names(fi) -> list[str]:
+    names = []
+    for loc in (fi.get("location") or []):
+        names += [os.path.basename(x) for x in re.findall(r"([\w./-]+\.sol)", loc or "")]
+    for x in (fi.get("files") or []):
+        names.append(os.path.basename(x))
+    return list(dict.fromkeys(names))
+
+
+FORGE_SECURITY_ONLY = os.environ.get("SECLAB_FORGE_ALL", "") == ""
+FORGE_NOISE = re.compile(
+    r"docstring|natspec|missing doc|documentation|naming convention|naming-convention|"
+    r"gas optim|gas-optim|gas saving|gas cost|gas inefficien|gas usage|typo|misspell|spelling|"
+    r"unused (import|variable|state|function|parameter|event)|dead code|unreachable code|code style|"
+    r"style guide|coding style|code quality|magic number|floating pragma|pragma version|lock the pragma|"
+    r"outdated solidity|solidity version|missing event|event emission|emit an event|lack of event|"
+    r"redundant|readability|cosmetic|best practice|named return|immutable keyword|constant keyword|"
+    r"use of safemath|boilerplate|informational")
+
+
+def _forge_emit(findings, project_key, lic, resolve, out):
+    csha = _sha(project_key)
+    for fi in findings:
+        title = (fi.get("title") or "").strip()
+        desc = (fi.get("description") or "").strip()
+        if len(desc) < 25:
+            continue
+        sev = (fi.get("severity") or "N/A").title()
+        if FORGE_SECURITY_ONLY and (sev in ("Info", "Informational", "N/A", "Gas", "Note")
+                                    or FORGE_NOISE.search((title + " " + desc).lower())):
+            continue
+        cwes = _flatten_cwes(fi.get("category"))
+        cls = _forge_class(title, desc)
+        locs = fi.get("location") or []
+        binp = f"Title: {title}" + (f"\nLocation: {', '.join(locs[:4])}" if locs else "")
+        bout = f"Severity: {sev}." + (f" CWE: {cwes}." if cwes else "") + f" {desc}"
+        out.append(Example("B", cls,
+                           "A security auditor reviewed a Solidity project and reported the finding below. "
+                           "Explain the vulnerability, assess its severity, and give the root cause and impact.",
+                           binp, bout, "FORGE", lic, csha))
+        src = resolve(fi) if resolve else None
+        if src and 200 <= len(src) <= 24000:
+            out.append(Example("A", cls,
+                               "Analyze this Solidity code for security vulnerabilities. Name the issue, its "
+                               "severity, and explain the root cause.",
+                               _window(_norm(src), _forge_line(locs)),
+                               f"Vulnerability: {title}\nSeverity: {sev}"
+                               + (f"\nCWE: {cwes}" if cwes else "") + f"\nRoot cause: {desc}",
+                               "FORGE", lic, csha))
+
+
+def load_forge(curated_base: str, artifacts_base: str) -> list[Example]:
+    out: list[Example] = []
+    # Curated VFPs: source is inline (affected_files)
+    for f in glob.glob(os.path.join(curated_base, "flatten", "vfp", "*.json")):
+        try:
+            d = json.load(open(f))
+        except Exception:
+            continue
+        af = d.get("affected_files") or {}
+        proj = d.get("project_name") or os.path.basename(f)
+
+        def resolve_curated(fi, af=af):
+            want = set(_forge_names(fi))
+            for nm, content in af.items():
+                if os.path.basename(nm) in want and isinstance(content, str):
+                    return content
+            vals = [v for v in af.values() if isinstance(v, str)]
+            return vals[0] if vals else None
+        _forge_emit(d.get("findings", []), "FORGE-Curated::" + proj, "MIT", resolve_curated, out)
+    # Artifacts: resolve source off disk via a basename index (cached reads)
+    croot = os.path.join(artifacts_base, "dataset", "contracts")
+    idx: dict[str, list[str]] = {}
+    if os.path.isdir(croot):
+        for sf in glob.glob(os.path.join(croot, "**", "*.sol"), recursive=True):
+            idx.setdefault(os.path.basename(sf), []).append(sf)
+    cache: dict[str, str] = {}
+
+    def read(path):
+        if path not in cache:
+            try:
+                cache[path] = open(path, errors="ignore").read()
+            except Exception:
+                cache[path] = ""
+        return cache[path]
+
+    for f in glob.glob(os.path.join(artifacts_base, "dataset", "results", "**", "*.json"), recursive=True):
+        try:
+            d = json.load(open(f))
+        except Exception:
+            continue
+        report = d.get("path") or f
+        pinfo = d.get("project_info") or {}
+        pp = pinfo.get("project_path") or {}
+        dirs = list(pp.values()) if isinstance(pp, dict) else ([pp] if pp else [])
+
+        def resolve_artifacts(fi, dirs=dirs):
+            for nm in _forge_names(fi)[:2]:
+                paths = idx.get(nm)
+                if not paths:
+                    continue
+                path = next((pp for pp in paths if any(str(dd) in pp for dd in dirs)), paths[0])
+                src = read(path)
+                if src:
+                    return src
+            return None
+        _forge_emit(d.get("findings", []), "FORGE-Artifacts::" + report, "MIT", resolve_artifacts, out)
+    return out
+
+
+
+# ---------------- CVE-Smart-Contracts (491 CVE/SWC-labeled, reviewed matches; mixed-public) ----------------
+SWC_CLS = {"SWC-101": "arithmetic", "SWC-107": "reentrancy", "SWC-104": "unchecked_low_level_calls",
+           "SWC-115": "access_control", "SWC-105": "access_control", "SWC-106": "unprotected-selfdestruct",
+           "SWC-112": "delegatecall", "SWC-114": "front_running", "SWC-116": "time_manipulation",
+           "SWC-120": "bad_randomness", "SWC-128": "denial_of_service", "SWC-132": "arithmetic",
+           "SWC-108": "uninitialized-storage", "SWC-113": "denial_of_service", "SWC-117": "signature-replay",
+           "SWC-121": "signature-replay", "SWC-122": "signature-replay", "SWC-100": "access_control"}
+
+
+def load_cve(base: str) -> list[Example]:
+    out: list[Example] = []
+    cj = os.path.join(base, "cve.json")
+    if not os.path.exists(cj):
+        return out
+    records = (json.load(open(cj)) or {}).get("records", {})
+    for cve, r in records.items():
+        locs = ((r.get("localization") or {}).get("locations")) or []
+        if not locs:                         # only reviewed, non-refuted matches
+            continue
+        summary = ((r.get("localization") or {}).get("summary") or "").strip()
+        labels = r.get("labels") or {}
+        cwe = (labels.get("CWE") or {}).get("primary") or {}
+        swc = (labels.get("SWC") or {}).get("primary") or {}
+        cls = SWC_CLS.get(swc.get("id", "")) or _forge_class((cwe.get("name") or "") + " " + summary, summary)
+        srcp = (((r.get("artifacts") or {}).get("source")) or {}).get("path")
+        if not srcp:
+            continue
+        fp = os.path.join(base, srcp)
+        if not os.path.exists(fp):
+            continue
+        try:
+            src = _norm(open(fp, errors="ignore").read())
+        except Exception:
+            continue
+        if not (200 <= len(src) <= 24000):
+            continue
+        fn = locs[0].get("function") or {}
+        line = fn.get("start_line") or 0
+        sig = fn.get("signature", "")
+        lic = "mixed-public (CVE-Smart-Contracts)"
+        csha = _sha(cve)
+        label = cwe.get("name") or cls
+        out.append(Example("A", cls,
+                           "Analyze this Solidity code for a known security vulnerability. Name the "
+                           "vulnerability class, the affected function, and the root cause.",
+                           _window(src, line),
+                           f"Vulnerability: {label} ({cve}).\nSWC: {swc.get('id','')}\n"
+                           f"Location: {sig}\nRoot cause: {summary}", "CVE-Smart-Contracts", lic, csha))
+        if len(summary) > 30:
+            out.append(Example("B", cls,
+                               "A smart contract is the subject of the CVE below. Explain the vulnerability "
+                               "class, the root cause, and the impact.",
+                               f"{cve}: {summary}",
+                               f"Class: {label}. SWC: {swc.get('id','')}. {summary}",
+                               "CVE-Smart-Contracts", lic, csha))
+    return out
+
+
 LOADERS = {
     "corpus": lambda: load_corpus(),
     "smartbugs": lambda: load_smartbugs(os.path.join(SCRATCH, "datasets", "smartbugs-curated")),
     "solidifi": lambda: load_solidifi(os.path.join(SCRATCH, "datasets", "solidifi")),
     "not_so_smart": lambda: load_not_so_smart(os.path.join(SCRATCH, "datasets", "not-so-smart")),
     "defihacklabs": lambda: load_defihacklabs(os.path.join(SCRATCH, "datasets", "defihacklabs")),
+    "forge": lambda: load_forge(os.path.join(SCRATCH, "datasets", "FORGE-Curated"), os.path.join(SCRATCH, "datasets", "FORGE-Artifacts")),
+    "cve": lambda: load_cve(os.path.join(SCRATCH, "datasets", "CVE-Smart-Contracts")),
 }
 
 
@@ -370,7 +600,7 @@ def write(examples: list[Example], out_dir: str, per_source: dict):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild","verified"])
+    ap.add_argument("--sources", nargs="+", default=["corpus","smartbugs","solidifi","not_so_smart","defihacklabs","web3bugs","defivulnlabs","slither_wild","verified","forge","cve"])
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "training", "data"))
     a = ap.parse_args()
     examples, per_source = curate(a.sources)

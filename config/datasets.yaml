@@ -30,3 +30,27 @@ sources:
     license: "unknown"
     split: "eval"
     verified: false
+
+# --- added 2026-11-05 (verified, not blindly ingested) ---
+FORGE-Artifacts:
+  url: https://github.com/shenyimings/FORGE-Artifacts
+  license: MIT
+  kind: real-audit-findings
+  raw_findings: 27495
+  used: security-relevant only (Info/N-A + gas/style/docs dropped via quality gate)
+  note: capability A (detect, source windowed to finding line) + B (explain finding)
+FORGE-Curated:
+  url: https://github.com/shenyimings/FORGE-Curated
+  license: MIT
+  kind: real-audit-findings (recent, 11 top-tier firms, source inline)
+CVE-Smart-Contracts:
+  url: https://github.com/smartbugs/CVE-Smart-Contracts
+  license: mixed-public (contracts from Etherscan; repo code MIT)
+  kind: CVE/SWC-labeled, manually reviewed
+  used: reviewed non-refuted matches ONLY (491 records, all with localization)
+evaluated_rejected:
+  smartbugs-wild: unlabeled 47k, solc 0.4.x — fails modern compile; no supervised labels
+  gsalzer/cgt: 20k manual labels but old-era + heavy SmartBugs overlap (dedup risk); available on request
+  CoderDamien/smart-contract-vuln-dataset: tiny (1.5MB), re-packaged public sets — dup risk
+  Zellic/smart-contract-fiesta: large UNLABELED corpus — useful as scan targets, not training labels
+  Fernan7w7/evm-trace-dataset: execution traces, wrong modality for source-level vuln training

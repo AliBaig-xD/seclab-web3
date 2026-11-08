@@ -38,6 +38,16 @@ def test_poc_without_repro_is_not_proven():
     assert not f.reportable
 
 
+def test_insufficient_dynamic_proof_does_not_corroborate():
+    f = Finding(hypothesis=mkh(), evidence=[
+        Evidence(kind="aderyn", tool="aderyn", summary="static detector"),
+        Evidence(kind="foundry_poc", tool="forge",
+                 summary="passed but insufficient proof"),
+    ])
+    assert f.recompute_tier() == Tier.CANDIDATE
+    assert not f.reportable
+
+
 def test_single_tool_stays_candidate():
     f = Finding(hypothesis=mkh(),
                 evidence=[Evidence(kind="slither", tool="slither", summary="x")])

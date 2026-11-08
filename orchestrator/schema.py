@@ -73,7 +73,11 @@ class Finding:
             return self.tier
         DYNAMIC_PROOF = {"foundry_poc", "echidna", "medusa"}
         kinds = {e.kind for e in self.evidence}
-        independent = {e.tool for e in self.evidence if e.kind != "llm"}
+        independent = {
+            e.tool for e in self.evidence
+            if e.kind != "llm"
+            and not (e.kind in DYNAMIC_PROOF and not e.proof_valid)
+        }
         if any(e.kind in DYNAMIC_PROOF and e.proof_valid
                and e.proof.get("proof_status") == "PROVEN"
                for e in self.evidence) and self.repro_cmd:

@@ -11,11 +11,21 @@ def load(base, adapter):
     tok = AutoTokenizer.from_pretrained(base, trust_remote_code=True)
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
-    m = AutoModelForCausalLM.from_pretrained(base, torch_dtype=torch.bfloat16,
-                                             device_map="auto", trust_remote_code=True)
+    offload_folder = os.environ.get(
+        "SECLAB_EVAL_OFFLOAD", "/opt/dlami/nvme/seclab/eval-offload"
+    )
+    os.makedirs(offload_folder, exist_ok=True)
+    m = AutoModelForCausalLM.from_pretrained(
+        base,
+        torch_dtype=torch.bfloat16,
+        device_map="auto",
+        offload_folder=offload_folder,
+        offload_state_dict=True,
+        trust_remote_code=True,
+    )
     if adapter and os.path.exists(os.path.join(adapter, "adapter_config.json")):
         from peft import PeftModel
-        m = PeftModel.from_pretrained(m, adapter)
+        m = PeftModel.from_pretrained(m, adapter, offload_folder=offload_folder)
     m.eval()
     return tok, m
 

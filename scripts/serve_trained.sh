@@ -15,4 +15,11 @@ export HF_HOME=/opt/dlami/nvme/seclab/hf
 echo "serving $BASE + adapter(seclab) on :8001 ..."
 exec "$VENV/bin/python" -m vllm.entrypoints.openai.api_server \
   --model "$BASE" --enable-lora --lora-modules seclab=model/adapters \
-  --port 8001 --max-model-len 4096 --gpu-memory-utilization 0.85 --dtype bfloat16
+  --port 8001 \
+  --max-model-len 2048 \
+  --max-num-seqs 1 \
+  --gpu-memory-utilization 0.85 \
+  --cpu-offload-gb 4 \
+  --max-lora-rank 32 \
+  --enforce-eager \
+  --dtype half

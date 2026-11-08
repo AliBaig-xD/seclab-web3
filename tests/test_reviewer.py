@@ -15,7 +15,8 @@ class FP:
 
 def test_reviewer_never_falsifies_dynamic_proof(tmp_path):
     f = Finding(hypothesis=Hypothesis("reentrancy", "V.sol:1", "p", "i"),
-                evidence=[Evidence(kind="foundry_poc", tool="forge", summary="drained", repro="r")],
+                evidence=[Evidence(kind="foundry_poc", tool="forge", summary="drained", repro="r",
+                                   proof_valid=True, proof={"proof_status": "PROVEN"})],
                 repro_cmd="r")
     f.recompute_tier()
     assert LLMReviewer(FP()).falsify(f, str(tmp_path)) is False

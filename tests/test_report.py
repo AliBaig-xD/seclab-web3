@@ -5,7 +5,8 @@ from orchestrator.report import render_markdown
 def proven():
     f = Finding(hypothesis=Hypothesis(vuln_type="reentrancy", location="V.sol:42",
                                       precondition="ext call", claimed_impact="drain"),
-                evidence=[Evidence(kind="foundry_poc", tool="forge", summary="drained 100%")],
+                evidence=[Evidence(kind="foundry_poc", tool="forge", summary="drained 100%",
+                                   proof_valid=True, proof={"proof_status": "PROVEN"})],
                 repro_cmd="forge test --match-test test_exploit")
     f.severity = Severity.CRITICAL
     f.recompute_tier()

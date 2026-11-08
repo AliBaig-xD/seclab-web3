@@ -12,7 +12,8 @@ def test_emit_detection_and_poc(tmp_path):
         "    function test_exploit() public { require(address(v).balance == 0, \"drained\"); }\n}\n")
     f = Finding(hypothesis=Hypothesis("reentrancy", "src/Vault.sol:8", "p", "drains funds"),
                 evidence=[Evidence(kind="foundry_poc", tool="forge", summary="x", repro="r",
-                                   artifact_path=str(poc))], repro_cmd="r")
+                                   artifact_path=str(poc), proof_valid=True,
+                                   proof={"proof_status": "PROVEN"})], repro_cmd="r")
     f.severity = Severity.HIGH
     f.recompute_tier()
     out = tmp_path / "verified.jsonl"

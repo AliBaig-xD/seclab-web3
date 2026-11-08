@@ -17,7 +17,8 @@ class FakePoC:
     def verify(self, h, t):
         if "reentran" in h.vuln_type:
             return Evidence(kind="foundry_poc", tool="forge", summary="poc passed",
-                            repro="forge test --match-test x", severity_hint="HIGH")
+                            repro="forge test --match-test x", severity_hint="HIGH",
+                            proof_valid=True, proof={"proof_status": "PROVEN"})
         return None
 
 
@@ -96,7 +97,8 @@ class WinningExploiter:
     def attempt(self, hyp, target_dir, imp, src):
         from orchestrator.schema import Evidence
         return Evidence(kind="foundry_poc", tool="forge", summary="generated PoC passed",
-                        repro="forge test --match-contract PoC"), 1
+                        repro="forge test --match-contract PoC", proof_valid=True,
+                        proof={"proof_status": "PROVEN"}), 1
 
 
 def test_exploiter_upgrades_candidate_to_proven(tmp_path):

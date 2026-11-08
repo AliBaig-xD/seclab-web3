@@ -4,7 +4,8 @@ from orchestrator.disclosure import build_disclosure, render_markdown, Disclosur
 
 def _proven():
     f = Finding(hypothesis=Hypothesis("reentrancy", "V.sol:8", "p", "drain funds"),
-                evidence=[Evidence(kind="foundry_poc", tool="forge", summary="drained", repro="r")],
+                evidence=[Evidence(kind="foundry_poc", tool="forge", summary="drained", repro="r",
+                                   proof_valid=True, proof={"proof_status": "PROVEN"})],
                 repro_cmd="forge test --match-test t")
     f.severity = Severity.HIGH
     f.recompute_tier()

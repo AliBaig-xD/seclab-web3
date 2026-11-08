@@ -30,6 +30,8 @@ class Evidence:
     deterministic: bool = True
     repro: Optional[str] = None
     severity_hint: Optional[str] = None
+    proof_valid: bool = False
+    proof: dict = field(default_factory=dict)
     created: float = field(default_factory=time.time)
 
     def digest(self) -> str:
@@ -72,7 +74,9 @@ class Finding:
         DYNAMIC_PROOF = {"foundry_poc", "echidna", "medusa"}
         kinds = {e.kind for e in self.evidence}
         independent = {e.tool for e in self.evidence if e.kind != "llm"}
-        if (kinds & DYNAMIC_PROOF) and self.repro_cmd:
+        if any(e.kind in DYNAMIC_PROOF and e.proof_valid
+               and e.proof.get("proof_status") == "PROVEN"
+               for e in self.evidence) and self.repro_cmd:
             self.tier = Tier.PROVEN
         elif len(independent) >= 2:
             self.tier = Tier.CORROBORATED

@@ -28,6 +28,19 @@ Only PROVEN and CORROBORATED are reported. CANDIDATE is never shipped.
 4. Evidence (tool output / counterexample / PoC trace) is stored and linked. No evidence → stays CANDIDATE.
 5. Severity/impact asserted only when demonstrated; otherwise "unproven."
 
+### Generated PoC proof criteria
+
+A compiling or passing Foundry test is not itself an exploit proof. Generated PoCs
+must emit structured `ProofMechanism` and `ProofImpact` evidence after execution,
+exercise the claimed vulnerability mechanism, and assert an observable security
+impact. The evidence records compilation, execution, mechanism validation, impact
+validation, independent reproduction, and proof status separately. For reentrancy,
+the runtime trace must show a callback re-entry and repeated withdrawal during the
+initial call, plus the impact evidence. A PoC that passes without these checks is
+retained as `insufficient-proof` evidence but cannot promote a finding to PROVEN;
+independent tool evidence may still leave it CORROBORATED, otherwise it remains
+CANDIDATE.
+
 ### Prompt-injection defense (the model reads attacker-controlled input)
 Contract source, comments, NatSpec, on-chain strings, and tool logs are **untrusted data**, never instructions. They are fenced as data in prompts; the model may not execute directives found inside them. (Checklist adapted from ECC `the-security-guide.md`.)
 

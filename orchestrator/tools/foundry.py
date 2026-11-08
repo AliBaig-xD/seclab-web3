@@ -41,7 +41,13 @@ class FoundryPoCVerifier:
         passed = any(k.split("(")[0] == self.poc_test and v for k, v in self._cache.items())
         if passed:
             return Evidence(kind="foundry_poc", tool="forge",
-                            summary=f"PoC '{self.poc_test}' passed; impact demonstrated on fork",
+                            summary=f"PoC '{self.poc_test}' passed; impact requires proof validation",
                             repro=f"forge test --match-test {self.poc_test}",
-                            severity_hint="HIGH")
+                            severity_hint="HIGH",
+                            proof={"compiled": True, "executed": True,
+                                   "mechanism_validated": False,
+                                   "impact_validated": False,
+                                   "independent_reproduction": False,
+                                   "proof_status": "INSUFFICIENT",
+                                   "reason": "runtime proof metadata unavailable"})
         return None

@@ -24,7 +24,8 @@ def test_corroborated_two_independent_tools():
 
 def test_proven_needs_poc_and_repro():
     f = Finding(hypothesis=mkh(),
-                evidence=[Evidence(kind="foundry_poc", tool="forge", summary="drained 100%")],
+                evidence=[Evidence(kind="foundry_poc", tool="forge", summary="drained 100%",
+                                   proof_valid=True, proof={"proof_status": "PROVEN"})],
                 repro_cmd="forge test --match-test test_exploit")
     assert f.recompute_tier() == Tier.PROVEN
     assert f.reportable
@@ -67,6 +68,7 @@ def test_hypothesis_id_stable_and_sized():
 def test_echidna_falsification_with_repro_is_proven():
     f = Finding(hypothesis=mkh(),
                 evidence=[Evidence(kind="echidna", tool="echidna", summary="falsified",
-                                   repro="echidna . --contract X")],
+                                   repro="echidna . --contract X", proof_valid=True,
+                                   proof={"proof_status": "PROVEN"})],
                 repro_cmd="echidna . --contract X")
     assert f.recompute_tier() == Tier.PROVEN and f.reportable

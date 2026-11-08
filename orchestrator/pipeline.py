@@ -127,7 +127,8 @@ class Pipeline:
                 if ev:
                     f.evidence.append(ev)
             for e in f.evidence:
-                if e.kind in ("foundry_poc", "echidna", "medusa") and e.repro and not f.repro_cmd:
+                if (e.kind in ("foundry_poc", "echidna", "medusa")
+                        and e.proof_valid and e.repro and not f.repro_cmd):
                     f.repro_cmd = e.repro
             f.severity = _severity(f)
             f.recompute_tier()
@@ -140,7 +141,9 @@ class Pipeline:
                     ev, _it = self.exploiter.attempt(f.hypothesis, target_dir, imp, src)
                     if ev:
                         f.evidence.append(ev)
-                        if ev.repro and not f.repro_cmd:
+                        if ev.kind == "foundry_poc" and not ev.proof_valid:
+                            f.notes += "[insufficient-proof: generated PoC passed without validated mechanism/impact] "
+                        if ev.proof_valid and ev.repro and not f.repro_cmd:
                             f.repro_cmd = ev.repro
                         f.recompute_tier()
             if self.reviewer is not None and f.reportable and self.reviewer.falsify(f, target_dir):

@@ -54,5 +54,7 @@ genuinely specialized model (the "well-trained small model" thesis). config/trai
 base_model is one line; on A100/bigger the 14B (or larger) trains unchanged.
 
 
-## D12 — UPDATE: 7B is ~11h/run on T4 -> train 1.5B well
-At 292s/step a 7B QLoRA is ~11h for 2 epochs on the T4 (GPU locked). We train Qwen2.5-Coder-1.5B-Instruct 2 full epochs (~2.5h) -- a well-trained small specialist. 3B/7B/14B train unchanged on bigger hardware by editing base_model.
+## D12 — SUPERSEDED: 1.5B fast-iteration plan
+The earlier 1.5B fast-iteration plan was superseded by the completed
+Qwen2.5-Coder-7B-Instruct adapter. The 1.5B adapter remains only as a baseline for
+comparison; the public release is the 7B adapter documented in the training runbook.

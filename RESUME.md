@@ -51,14 +51,17 @@ IMPROVEMENT LEVERS (built on top): invariant->harness synthesis, self-improvemen
 multi-sample hypotheses, reviewer voting (--thorough), Halmos->PoC, Etherscan fallback,
 parallel scanners (--parallel). docs/LIMITATIONS.md lists all 14 limitations honestly.
 
-TRAINING: production QLoRA pipeline + ~1661-example curated multi-source dataset (644 real
-DeFiHackLabs PoCs) + self-improvement flywheel. Real metrics (ppl + detection acc + PoC
-structural). RUNNING NOW: Qwen2.5-Coder-1.5B, 2 epochs (~2.5h) -> real adapter.
+TRAINING: production QLoRA pipeline + expanded curated multi-source dataset (644 real
+DeFiHackLabs PoCs) + self-improvement flywheel. The completed release is a
+Qwen2.5-Coder-7B-Instruct QLoRA adapter, published at
+https://huggingface.co/iamalibaig/seclab-web3-adapter. Evaluation and PoC metrics are
+documented in generated results artifacts; label-matching accuracy is not real-world audit
+accuracy.
 
-PENDING (post-training, needs GPU/CPU free): full lab benchmark (all engines); live-ground
-the new levers (invariant synth, Halmos->PoC, mythril multi-file, differential); report
-trained-adapter metrics; serve the trained model (vLLM base+adapter, or merge->GGUF for
-ollama). Remaining big levers: Go/Rust client analyzer, web dashboard, Dockerfile digest pin.
+NEXT: keep the public adapter and runbooks synchronized; rerun the authorized regression
+hunt after proof-gate changes; then benchmark all engines and live-ground the new levers
+(invariant synth, Halmos->PoC, Mythril multi-file, differential). Remaining big levers:
+Go/Rust client analyzer, web dashboard, Dockerfile digest pin.
 
 ## Map
 `SCOPE.md` · `docs/WORKFLOW.md` (law) · `docs/IMPLEMENTATION_PLAN.md` (phases+gates) ·

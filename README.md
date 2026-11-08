@@ -49,6 +49,9 @@ A Finding's tier is DERIVED from evidence, never asserted by the model:
 - **Training pipeline**: multi-source curated dataset (SmartBugs, SolidiFI, 644 real
   DeFiHackLabs PoCs, Web3Bugs, DeFiVulnLabs, not-so-smart, our corpus, self-labeling
   flywheel), completion-masked QLoRA SFT, eval/ckpt/resume, config-scalable, HF push.
+  Public adapter: [iamalibaig/seclab-web3-adapter](https://huggingface.co/iamalibaig/seclab-web3-adapter)
+  — QLoRA for Qwen2.5-Coder-7B-Instruct; the base model is required separately and use is
+  limited to authorized security research.
 - **Knowledge base**: RAG + a vuln-class corpus spanning every EVM domain.
 
 ## Docs
